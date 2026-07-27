@@ -121,10 +121,10 @@
   [data-drop="rest"]{min-height:8px;}
   .md-title{font-size:12.5px; font-weight:800; color:#c2410c; margin-bottom:5px;}
   .md-rest-title{font-size:12px; font-weight:800; color:var(--muted); margin:2px 0 5px;}
-  /* 拖拽手柄（只有它才是 drop 目标，避免误触） */
-  .drag-grip{flex:0 0 auto;width:22px;display:flex;align-items:center;justify-content:center;padding:6px 2px;border-radius:6px;background:rgba(99,102,241,.07);color:var(--muted);cursor:grab;font-size:9px;line-height:3px;letter-spacing:1.5px;-webkit-user-select:none;user-select:none;margin-left:auto;}
-  .drag-grip::before{content:'⋮⋮';}
-  .drag-grip:active{background:rgba(99,102,241,.18);}
+  /* 拖拽手柄：只在每条任务最左边，必须抓它才能拖动，避免下滑误触 */
+  .grip{flex:0 0 auto;width:20px;align-self:stretch;min-height:22px;display:flex;align-items:center;justify-content:center;margin-right:8px;color:var(--muted);cursor:grab;font-size:12px;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
+  .grip::before{content:'⋮⋮';letter-spacing:1px;}
+  .grip:active{color:var(--indigo);}
   .pdot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; flex:0 0 auto;}
   .due-badge{font-size:10px; color:var(--muted); margin-left:6px;}
   .due-badge.urgent{color:var(--rose); font-weight:800;}
@@ -545,13 +545,13 @@ function viewToday(){
   h+=`<div class="mini-cap">本周任务完成度 ${sc.tasksPct!=null?sc.tasksPct+'%':'—'} · ${sc.tasksDone}/${sc.tasksDue}</div>`;
   if(tasks.length===0) h+=`<p class="empty">今天没有待办任务。</p>`;
   else{
-    // 今天必做（手柄在右侧，只有手柄是 drop 目标）
-    h+=`<div class="mustdo-zone"><div class="row between" style="margin-bottom:4px"><div class="md-title">🔴 今天必做 (${mustDo.length})</div><div class="drag-grip" data-drop="mustdo"></div></div>`;
+    // 今天必做（纯放置区：整块可接收拖入的任务，区域本身不加手柄）
+    h+=`<div class="mustdo-zone" data-drop="mustdo"><div class="row between" style="margin-bottom:4px"><div class="md-title">🔴 今天必做 (${mustDo.length})</div></div>`;
     mustDo.forEach(x=>{ h+=todayTaskItem(x,w); });
-    if(mustDo.length===0) h+=`<div class="md-empty">把下面「本周待办」里的任务拖到手柄上</div>`;
+    if(mustDo.length===0) h+=`<div class="md-empty">拖动「本周待办」任务左侧的 ⋮⋮ 手柄到这里</div>`;
     h+=`</div>`;
-    // 本周待办（拖回手柄可取消「今天必做」）
-    h+=`<div><div class="row between" style="margin-bottom:4px"><div class="md-rest-title">📋 本周待办 (${rest.length})</div><div class="drag-grip" data-drop="rest"></div></div>`;
+    // 本周待办（每条任务最左边有手柄，必须抓手柄才能拖动）
+    h+=`<div data-drop="rest"><div class="row between" style="margin-bottom:4px"><div class="md-rest-title">📋 本周待办 (${rest.length})</div></div>`;
     if(rest.length>0){
       rest.forEach(x=>{ h+=todayTaskItem(x,w); });
     } else if(mustDo.length>0){
@@ -630,7 +630,10 @@ function todayTaskItem(x,w){
   const prColor=pr==='high'?'var(--rose)':pr==='low'?'var(--muted)':'var(--amber)';
   const urg=isUrgent(t);
   const dueTxt=t.due?`📅 ${t.due.slice(5)}`:'';
-  return `<div class="item" draggable="true" data-drag-task="${t.id}" data-drag-gid="${x.g.id}" data-act="task-toggle" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}" style="${urg?'border-left:3px solid var(--rose);':''}">
+  const gripTitle = t.mustDo ? '拖回「本周待办」' : '拖动我到「今天必做」';
+  const grip=`<div class="grip" draggable="true" title="${gripTitle}"></div>`;
+  return `<div class="item" data-drag-task="${t.id}" data-drag-gid="${x.g.id}" data-act="task-toggle" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}" style="${urg?'border-left:3px solid var(--rose);':''}">
+    ${grip}
     <div class="chk"></div>
     <div class="it-title"><span class="pdot" style="background:${prColor}"></span>${esc(t.title)} ${urg?`<span class="due-badge urgent">🔴 今天到期</span>`:(dueTxt?`<span class="due-badge">${dueTxt}</span>`:'')}</div>
     <span class="itag">${esc(trunc(x.g.title,6))}</span>
@@ -1052,7 +1055,9 @@ function bindLongPress(){
   document.addEventListener('pointercancel',clear,{passive:true});
   // 长按触发后的那次 click 要吞掉，避免误勾选 / 误打卡
   document.addEventListener('click',e=>{
-    if(_lpFired){ _lpFired=false; e.preventDefault(); e.stopPropagation(); }
+    if(_lpFired){ _lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
+    // 点左侧拖拽手柄不触发整行的勾选 / 打卡
+    if(e.target.closest('.grip')){ e.preventDefault(); e.stopPropagation(); }
   },true);
 }
 document.addEventListener('click',async(e)=>{
@@ -1551,8 +1556,10 @@ let _dragTaskId=null,_dragGid=null;
 function initDrag(){
   // 桌面端 HTML5 DnD
   document.addEventListener('dragstart',e=>{
-    const item=e.target.closest('[data-drag-task]');
+    const gripEl=e.target.closest('.grip');
+    const item = gripEl ? gripEl.closest('[data-drag-task]') : e.target.closest('[data-drag-task]');
     if(!item)return;_dragTaskId=item.dataset.dragTask;_dragGid=item.dataset.dragGid;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',_dragTaskId);
+    if(gripEl && typeof e.dataTransfer.setDragImage==='function') e.dataTransfer.setDragImage(item,12,12);
     setTimeout(()=>item.style.display='none',0);
   });
   document.addEventListener('dragend',e=>{
@@ -1584,9 +1591,13 @@ function initDrag(){
   });
   // 移动端触摸拖拽
   let _touchEl=null,_touchGhost=null,_touchStartX=0,_touchStartY=0,_touchMoved=false;
+  function _startTouchDrag(item,e){ _touchEl=item;_touchMoved=false;const t=e.touches[0];_touchStartX=t.clientX;_touchStartY=t.clientY; }
   document.addEventListener('touchstart',e=>{
+    // 今天页：必须抓最左侧手柄才启动拖动；项目视图：仍允许整行拖动
+    const gripEl=e.target.closest('.grip');
+    if(gripEl){ const item=gripEl.closest('[data-drag-task]'); if(item)_startTouchDrag(item,e); return; }
     const item=e.target.closest('[data-drag-task]');
-    if(!item)return;_touchEl=item;_touchMoved=false;const t=e.touches[0];_touchStartX=t.clientX;_touchStartY=t.clientY;
+    if(item && item.closest('[data-wk-group]')) _startTouchDrag(item,e);
   },{passive:true});
   document.addEventListener('touchmove',e=>{
     if(!_touchEl||!_touchEl.dataset.dragTask)return;
