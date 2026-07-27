@@ -1584,11 +1584,9 @@ function initDrag(){
   let _touchEl=null,_touchGhost=null,_touchStartX=0,_touchStartY=0,_touchMoved=false;
   function _startTouchDrag(item,e){ _touchEl=item;_touchMoved=false;const t=e.touches[0];_touchStartX=t.clientX;_touchStartY=t.clientY; }
   document.addEventListener('touchstart',e=>{
-    // 今天页：必须抓最左侧手柄才启动拖动；项目视图：仍允许整行拖动
+    // 所有任务：必须抓最左侧手柄才启动拖动，避免整行误触
     const gripEl=e.target.closest('.grip');
-    if(gripEl){ const item=gripEl.closest('[data-drag-task]'); if(item)_startTouchDrag(item,e); return; }
-    const item=e.target.closest('[data-drag-task]');
-    if(item && item.closest('[data-wk-group]')) _startTouchDrag(item,e);
+    if(gripEl){ const item=gripEl.closest('[data-drag-task]'); if(item)_startTouchDrag(item,e); }
   },{passive:true});
   document.addEventListener('touchmove',e=>{
     if(!_touchEl||!_touchEl.dataset.dragTask)return;
