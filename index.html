@@ -575,6 +575,20 @@ function viewToday(){
   if(habits.length===0) h+=`<p class="empty">本周没有安排习惯。</p>`;
   else{
     h+=`<div class="day-names">${DAY_NAMES.map((n,i)=>`<span${i===d?' style="color:var(--indigo);font-weight:800;"':''}>${n}</span>`).join('')}</div>`;
+    habits.sort((a,b)=>{
+      const pa=a.hb.perWeek||1, pb=b.hb.perWeek||1;
+      const da=getHabitDays(a.hb.id,w).filter(Boolean).length;
+      const db=getHabitDays(b.hb.id,w).filter(Boolean).length;
+      const pctA=pa?Math.round(da/pa*100):0;
+      const pctB=pb?Math.round(db/pb*100):0;
+      // ① 已完成 100% 的放最后
+      if(pctA>=100 && pctB<100) return 1;
+      if(pctB>=100 && pctA<100) return -1;
+      // ② 频率高的排前
+      if(pb!==pa) return pb-pa;
+      // ③ 同频率：完成率低的放前
+      return pctA-pctB;
+    });
     habits.forEach(x=>{
       const days=getHabitDays(x.hb.id,w);
       const done=days.filter(Boolean).length;
