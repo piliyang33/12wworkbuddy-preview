@@ -125,6 +125,7 @@
   .grip{flex:0 0 auto;width:20px;align-self:stretch;min-height:22px;display:flex;align-items:center;justify-content:center;margin-right:-6px;color:var(--muted);cursor:grab;font-size:12px;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
   .grip::before{content:'⋮⋮';letter-spacing:1px;}
   .grip:active{color:var(--indigo);}
+  .it-title,.h-title,.ph-name{cursor:pointer;}
   .pdot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; flex:0 0 auto;}
   .due-badge{font-size:10px; color:var(--muted); margin-left:6px;}
   .due-badge.urgent{color:var(--rose); font-weight:800;}
@@ -597,7 +598,7 @@ function viewToday(){
       const done=days.filter(Boolean).length;
       const plan=x.hb.perWeek||1;
       const pct=plan?Math.round(done/plan*100):0;
-      h+=`<div class="habit-item" data-gid="${x.g.id}" data-hid="${x.hb.id}"><div class="h-head"><div class="h-title">${esc(x.hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">计划每周 ${plan} 次 · <span class="itag" style="display:inline-block;margin:0">${esc(trunc(x.g.title,6))}</span></div><div class="day-grid">`;
+      h+=`<div class="habit-item" data-gid="${x.g.id}" data-hid="${x.hb.id}"><div class="h-head"><div class="h-title" data-act="habit-edit" data-gid="${x.g.id}" data-hid="${x.hb.id}">${esc(x.hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">计划每周 ${plan} 次 · <span class="itag" style="display:inline-block;margin:0">${esc(trunc(x.g.title,6))}</span></div><div class="day-grid">`;
       for(let di=0;di<7;di++){
         const isOn=days[di];
         const cls=isOn?' on':'';
@@ -685,7 +686,7 @@ function viewProjects(){
       const days=getHabitDays(hb.id,w);
       const done=days.filter(Boolean).length;
       const plan=hb.perWeek||1;
-      h+=`<div class="ph-item" data-gid="${PERSONAL_ID}" data-hid="${hb.id}"><div class="ph-name">${esc(hb.title)}</div><div class="ph-sub">本周 ${done}/${plan} 次 · 始于 ${hb.startDate||'—'}</div></div>`;
+      h+=`<div class="ph-item" data-gid="${PERSONAL_ID}" data-hid="${hb.id}"><div class="ph-name" data-act="habit-edit" data-gid="${PERSONAL_ID}" data-hid="${hb.id}">${esc(hb.title)}</div><div class="ph-sub">本周 ${done}/${plan} 次 · 始于 ${hb.startDate||'—'}</div></div>`;
     });
     h+=`</div><button class="btn sm full" data-act="proj-open" data-gid="${PERSONAL_ID}" style="margin-top:8px">管理 / 打卡 →</button></div>`;
   } else {
@@ -736,7 +737,7 @@ function viewProjectDetail(gid){
       const done=days.filter(Boolean).length;
       const plan=hb.perWeek||1;
       const pct=plan?Math.round(done/plan*100):0;
-      h+=`<div class="habit-item" data-gid="${g.id}" data-hid="${hb.id}"><div class="h-head"><div class="h-title">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">始于 ${hb.startDate||'—'} · 本周 ${done}/${plan} 次</div><div class="day-grid">`;
+      h+=`<div class="habit-item" data-gid="${g.id}" data-hid="${hb.id}"><div class="h-head"><div class="h-title" data-act="habit-edit" data-gid="${g.id}" data-hid="${hb.id}">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">始于 ${hb.startDate||'—'} · 本周 ${done}/${plan} 次</div><div class="day-grid">`;
       for(let di=0;di<7;di++){const isOn=days[di];const cls=isOn?' on':'';const fut=(di>state.currentDay)?' future':'';h+=`<div class="day-chk${cls}${fut}" data-act="habit-day" data-hid="${hb.id}" data-w="${w}" data-d="${di}">${isOn?'✓':''}</div>`;}
       h+=`</div></div>`;
     });
@@ -762,7 +763,7 @@ function viewProjectDetail(gid){
       anyTask=true;
       wkTasks.forEach(t=>{
         const done=!!(t.log&&t.log[wi]);
-        h+=`<div class="item${done?' done':''}" draggable="true" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${done?'✓':''}</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${esc(t.title)}</div></div>`;
+        h+=`<div class="item${done?' done':''}" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="grip" draggable="true" title="拖动到其他周"></div><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${done?'✓':''}</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${esc(t.title)}</div></div>`;
       });
     }
     h+=`</div></div>`;
@@ -925,7 +926,7 @@ function viewReviewDetail(gid){
       const done=days.filter(Boolean).length;
       const plan=hb.perWeek||1;
       const pct=plan?Math.round(done/plan*100):0;
-      h+=`<div class="habit-item"><div class="h-head"><div class="h-title">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">${done}/${plan}次</div><div class="day-grid">`;
+      h+=`<div class="habit-item"><div class="h-head"><div class="h-title" data-act="habit-edit" data-gid="${g.id}" data-hid="${hb.id}">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">${done}/${plan}次</div><div class="day-grid">`;
       for(let di=0;di<7;di++){const isOn=days[di];const cls=isOn?' on':'';const fut=(di>state.currentDay)?' future':'';h+=`<div class="day-chk${cls}${fut}" data-act="habit-day" data-hid="${hb.id}" data-w="${w}" data-d="${di}">${isOn?'✓':''}</div>`;}
       h+=`</div></div>`;
     });
@@ -1036,26 +1037,9 @@ function bindView(){
 let _lpBound=false,_lpTimer=null,_lpTarget=null,_lpFired=false,_lpX=0,_lpY=0;
 function bindLongPress(){
   if(_lpBound)return; _lpBound=true;
-  const clear=()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} _lpTarget=null; };
-  document.addEventListener('pointerdown',e=>{
-    const el=e.target.closest('.habit-item[data-gid][data-hid], .ph-item[data-gid][data-hid]');
-    if(!el)return;
-    _lpTarget=el; _lpFired=false; _lpX=e.clientX; _lpY=e.clientY;
-    _lpTimer=setTimeout(()=>{
-      _lpFired=true;
-      const g=el.dataset.g||el.dataset.gid;
-      openQuickEditHabit(g, el.dataset.hid);
-    },500);
-  },{passive:true});
-  document.addEventListener('pointermove',e=>{
-    if(_lpTimer&&(Math.abs(e.clientX-_lpX)>10||Math.abs(e.clientY-_lpY)>10))clear();
-  },{passive:true});
-  document.addEventListener('pointerup',clear,{passive:true});
-  document.addEventListener('pointercancel',clear,{passive:true});
-  // 长按触发后的那次 click 要吞掉，避免误勾选 / 误打卡
+  // 任务=点方框完成/点标题编辑；习惯=点标题编辑。长按编辑已取消。
+  // 仅保留：点左侧拖拽手柄时不触发勾选或编辑。
   document.addEventListener('click',e=>{
-    if(_lpFired){ _lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
-    // 点左侧拖拽手柄不触发整行的勾选 / 打卡
     if(e.target.closest('.grip')){ e.preventDefault(); e.stopPropagation(); }
   },true);
 }
@@ -1116,6 +1100,10 @@ document.addEventListener('click',async(e)=>{
     // 任务编辑（点标题）
     else if(act==='task-edit'){
       openQuickEditTask(t.dataset.g, t.dataset.t);
+    }
+    // 习惯编辑（点标题）
+    else if(act==='habit-edit'){
+      openQuickEditHabit(t.dataset.gid, t.dataset.hid);
     }
 
     // 习惯每日打卡
