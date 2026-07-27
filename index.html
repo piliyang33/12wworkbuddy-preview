@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#6366f1" />
+<title>12 周工作台</title>
+<style>
+  :root{
+    --indigo:#6366f1; --violet:#8b5cf6; --emerald:#10b981; --amber:#f59e0b;
+    --rose:#f43f5e; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0;
+    --bg:#f5f7fb; --card:#ffffff; --soft:#eef2ff;
+    --shadow:0 6px 20px rgba(30,41,59,.08);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:480px; margin:0 auto; min-height:100vh;}
+
+  /* ---- header (per-view) ---- */
+  .page-header{
+    background:linear-gradient(135deg,var(--indigo),var(--violet));
+    color:#fff; padding:18px 16px 14px; border-radius:0 0 20px 20px;
+    box-shadow:var(--shadow); margin-bottom:14px;
+  }
+  .page-header h1{margin:0; font-size:19px; letter-spacing:.3px; font-weight:800;}
+  .page-header p{margin:3px 0 0; font-size:12px; opacity:.85;}
+  .ph-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .help-btn{background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35); padding:6px 10px; font-size:12px; border-radius:999px; flex:0 0 auto;}
+
+  .pad{padding:14px 14px 4px;}
+  .card{background:var(--card); border-radius:16px; padding:14px; box-shadow:var(--shadow); margin-bottom:12px;}
+  .card h3{margin:0 0 8px; font-size:15px; display:flex; align-items:center; gap:7px;}
+  .muted{color:var(--muted); font-size:12.5px;}
+  .pill{display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; background:var(--soft); color:var(--indigo); font-weight:700;}
+  .row{display:flex; gap:10px; align-items:center;}
+  .between{justify-content:space-between;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  /* buttons */
+  button{font-family:inherit; cursor:pointer; border:none; border-radius:11px; font-weight:700; font-size:13px; transition:.15s;}
+  button:active{transform:scale(.97);}
+  .btn{padding:9px 13px; background:var(--soft); color:var(--indigo);}
+  .btn.primary{background:linear-gradient(135deg,var(--indigo),var(--violet)); color:#fff;}
+  .btn.ghost{background:transparent; color:var(--muted); padding:7px 9px;}
+  .btn.sm{padding:6px 10px; font-size:12px;}
+  .btn.full{width:100%; justify-content:center;}
+  .btn.danger{background:#fff1f2; color:var(--rose);}
+  .btn.viole{background:linear-gradient(135deg,var(--violet),var(--indigo)); color:#fff;}
+  .btn[disabled]{opacity:.45; cursor:not-allowed;}
+
+  input,select,textarea{
+    font-family:inherit; font-size:14px; width:100%; padding:10px 12px;
+    border:1px solid var(--line); border-radius:11px; background:#fff; color:var(--ink); outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--indigo);}
+  textarea{resize:vertical; min-height:56px;}
+  label.fld{display:block; font-size:12.5px; color:var(--muted); margin:9px 0 4px; font-weight:700;}
+
+  /* project card */
+  .proj{border:1px solid var(--line); border-radius:15px; padding:13px; margin-bottom:10px; background:#fff;}
+  .proj-head{display:flex; align-items:center; gap:8px; margin-bottom:3px;}
+  .proj-head .ptitle{flex:1; font-size:15.5px; font-weight:800;}
+  .proj-edit-btn{flex:0 0 auto; padding:5px 10px; font-size:11.5px; background:var(--soft); color:var(--indigo); border-radius:8px; font-weight:700;}
+  .proj .ptitle{font-size:15.5px; font-weight:800; margin-bottom:3px;}
+  .proj .pmeta{font-size:11.5px; color:var(--muted); margin-bottom:5px;}
+  .proj .pacts{display:flex; flex-wrap:wrap; gap:7px; margin-top:6px;}
+  .pchips{display:flex; flex-wrap:wrap; gap:5px; margin:4px 0 2px;}
+  .pchip{font-size:10.5px; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--indigo); font-weight:700;}
+
+  /* 项目背景折叠 */
+  .pbg-toggle{font-size:11px; color:var(--muted); cursor:pointer; display:inline-flex; align-items:center; gap:3px; margin-bottom:5px; user-select:none;-webkit-user-select:none;}
+  .pbg-toggle:hover{color:var(--indigo);}
+  .pbg-body{display:none; font-size:11.5px; color:var(--muted); line-height:1.45; padding:8px 10px; background:#fafbfd; border-radius:9px; margin-bottom:6px; word-break:break-all;}
+  .pbg-body.show{display:block;}
+
+  /* 项目进度条 */
+  .proj-progress{margin:6px 0 4px;}
+  .pp-bar{height:7px; border-radius:999px; background:#eef2f7; overflow:hidden;}
+  .pp-bar > i{display:block; height:100%; border-radius:999px; transition:width .35s;}
+  .pp-info{display:flex; justify-content:space-between; align-items:center; margin-top:3px;}
+  .pp-label{font-size:10.5px; color:var(--muted);}
+  .pp-pct{font-size:12px; font-weight:800;}
+
+  /* 滞后指标进度标签（进度条式填充） */
+  .lag-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .ltag{position:relative; overflow:hidden; font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; border:1px solid var(--line); background:#f8fafc; color:var(--ink);}
+  .ltag-fill{position:absolute; left:0; top:0; bottom:0; opacity:.22;}
+  .ltag-txt{position:relative; z-index:1; white-space:nowrap;}
+
+  /* 今天页小进度条 */
+  .mini-bar{height:6px; border-radius:999px; background:#eef2f7; overflow:hidden; margin:3px 0 2px;}
+  .mini-bar > i{display:block; height:100%; border-radius:999px; transition:width .35s;}
+  .mini-cap{font-size:10.5px; color:var(--muted); margin-bottom:6px;}
+
+  /* 详情页：滞后指标行 + 周分组折叠 */
+  .lag-row{padding:9px 0; border-bottom:1px solid #f1f5f9;}
+  .lag-row:last-child{border-bottom:none;}
+  .lag-name{font-size:13px; font-weight:700;}
+  .lag-sub{font-size:10.5px; color:var(--muted); margin:1px 0 5px;}
+  .lag-input-row{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
+  .lag-actual2{flex:1; min-width:0; padding:10px 12px !important; font-size:14px !important; border:2px solid var(--line); border-radius:10px; background:#fafbfc; transition:border-color .15s;}
+  .lag-actual2:focus{border-color:var(--indigo); background:#fff; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+  .lag-pct2{flex:0 0 auto; font-weight:800; font-size:14px; min-width:42px; text-align:right;}
+  .wk-toggle{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; color:var(--indigo); padding:8px 2px; cursor:pointer; user-select:none;-webkit-user-select:none;}
+  .wk-body{display:none; padding:2px 0 4px;}
+  .wk-body.show{display:block;}
+  .wk-add{font-size:11px; color:var(--indigo); background:var(--soft); border:none; border-radius:8px; padding:3px 9px; font-weight:700; cursor:pointer; flex:0 0 auto; margin-left:6px;}
+
+  /* 任务拖拽 */
+  .item.dragging{opacity:.35; transform:scale(.98);}
+  .drop-over{border:2px dashed var(--indigo); border-radius:10px; background:#eef2ff; transition:.15s;}
+
+  /* 今天页：今天必做 + 优先级 + 截止 */
+  .mustdo-zone{background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:8px 10px; margin-bottom:10px;}
+  .mustdo-zone .md-empty,.md-rest-title+.md-empty,.md-empty{font-size:11px; color:var(--muted); text-align:center; padding:8px 0; line-height:1.4;}
+  [data-drop="rest"]{min-height:8px;}
+  .md-title{font-size:12.5px; font-weight:800; color:#c2410c; margin-bottom:5px;}
+  .md-rest-title{font-size:12px; font-weight:800; color:var(--muted); margin:2px 0 5px;}
+  .pdot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; flex:0 0 auto;}
+  .due-badge{font-size:10px; color:var(--muted); margin-left:6px;}
+  .due-badge.urgent{color:var(--rose); font-weight:800;}
+
+  /* 个人习惯卡片 */
+  .proj.personal{border-color:var(--violet); background:linear-gradient(135deg,#faf5ff,#eef2ff);}
+  /* 个人习惯列表 */
+  .ph-list{margin:2px 0 2px;}
+  .ph-item{padding:9px 2px; border-bottom:1px solid #f1f5f9;}
+  .ph-item:last-child{border-bottom:none;}
+  .ph-name{font-size:14px; font-weight:700;}
+  .ph-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+
+  /* 感悟（今日/本周） */
+  .jbox{border:none;}
+  .jsum{cursor:pointer; font-size:13px; font-weight:800; color:var(--indigo); list-style:none; user-select:none;}
+  .jsum::-webkit-details-marker{display:none;}
+  .jsum::before{content:'▾ ';}
+  details[open] .jsum::before{content:'▴ ';}
+  .jarea{width:100%; margin-top:8px; min-height:84px; resize:vertical; line-height:1.5;}
+  .jhint{font-size:10px; color:var(--muted); margin-top:4px;}
+  .streak{font-size:10px;color:var(--amber);font-weight:800;margin-left:6px;}
+
+  /* item list */
+  .item{display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid #f1f5f9;}
+  .item:last-child{border-bottom:none;}
+  .item .chk{width:22px; height:22px; border-radius:7px; border:2px solid var(--line); flex:0 0 auto; margin-top:2px; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; cursor:pointer; user-select:none;-webkit-user-select:none;}
+  .item.done .chk{background:var(--emerald); border-color:var(--emerald);}
+  .item.done .it-title{text-decoration:line-through; color:var(--muted);}
+  .it-title{font-size:14px; font-weight:600; flex:1; line-height:1.35;}
+  .itag{font-size:10px; padding:1px 6px; border-radius:999px; background:var(--soft); color:var(--indigo); font-weight:700; white-space:nowrap; flex:0 0 auto; margin-top:3px;}
+
+  /* habit day-grid */
+  .habit-item{padding:8px 0; border-bottom:1px solid #f1f5f9;}
+  .habit-item:last-child{border-bottom:none;}
+  .h-head{display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+  .h-title{font-size:14px; font-weight:700; flex:1;}
+  .h-pct{font-size:13px; font-weight:800; color:var(--emerald); flex:0 0 auto; min-width:38px; text-align:right;}
+  .h-sub{font-size:11px; color:var(--muted);}
+  .day-grid{display:flex; gap:4px;}
+  .day-chk{width:34px; height:34px; flex:0 0 auto; border-radius:8px; border:2px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--muted); cursor:pointer; user-select:none;-webkit-user-select:none; transition:.15s;}
+  .day-chk.on{background:var(--emerald); border-color:var(--emerald); color:#fff;}
+  .day-chk.future{opacity:.35;}
+  .day-names{display:flex; gap:4px; margin-bottom:3px;}
+  .day-names span{width:34px; text-align:center; font-size:10px; font-weight:700; color:var(--muted); flex:0 0 auto;}
+
+  /* completed tasks inline */
+  .done-list{margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:5px;}
+
+  /* rings */
+  .rings{display:flex; gap:12px; justify-content:center; margin:6px 0 4px;}
+  .ring{width:110px; height:110px;}
+  .ring-bg{fill:none; stroke:#eef2f7; stroke-width:10;}
+  .ring-fg{fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .5s;}
+  .ring-pct{text-anchor:middle; font-size:21px; font-weight:800; fill:var(--ink);}
+  .ring-sub{text-anchor:middle; font-size:10px; fill:var(--muted);}
+  .ring-label{text-align:center; font-size:12px; color:var(--muted); margin-top:-3px;}
+
+  .progress{height:9px; border-radius:999px; background:#eef2f7; overflow:hidden; margin:8px 0;}
+  .progress > i{display:block; height:100%; background:linear-gradient(90deg,var(--indigo),var(--violet));}
+
+  /* week nav */
+  .weekbar{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;}
+  .weekdots{display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 4px;}
+  .dot{width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:11px; font-weight:700; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .dot.on{background:linear-gradient(135deg,var(--indigo),var(--violet)); color:#fff; border:none;}
+  .dot.done{background:#ecfdf5; color:var(--emerald); border-color:#a7f3d0;}
+
+  /* lagging in review */
+  .lag-rec{display:flex; align-items:center; gap:7px; padding:7px 0; border-bottom:1px solid #f1f5f9;}
+  .lag-rec:last-child{border-bottom:none;}
+  .lag-rec-main{flex:1; min-width:0;}
+  .lag-rec-name{font-size:12.5px; font-weight:700; line-height:1.3;}
+  .lag-actual{flex:0 0 78px; width:78px; padding:7px 7px; text-align:center; font-size:13px !important;}
+  .lag-pct{flex:0 0 46px; text-align:right; font-weight:800; font-size:14px; color:var(--emerald);}
+
+  /* task group by week */
+  .wk-group{margin-bottom:14px;}
+  .wk-group-title{font-size:13px; font-weight:800; color:var(--indigo); margin:8px 0 4px; padding-left:2px;}
+
+  /* 复盘页：项目卡片 + 周柱状图 */
+  .rev-card{border:1px solid var(--line); border-radius:15px; padding:12px; margin-bottom:10px; background:#fff; position:relative;}
+  .rev-card .rctitle{font-size:15px; font-weight:800; margin-bottom:4px; padding-right:104px;}
+  .rev-detail-btn{position:absolute; top:10px; right:10px; font-size:11px; font-weight:700; padding:5px 9px; border-radius:8px; border:1px solid var(--indigo); color:var(--indigo); background:#fff; cursor:pointer; white-space:nowrap;}
+  .rev-detail-btn:active{background:var(--indigo); color:#fff;}
+  .rev-lag-mini{display:flex; flex-wrap:wrap; gap:5px; margin:6px 0;}
+  .rlm-tag{font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; background:#f1f5f9; color:var(--ink);}
+  .bar-chart{display:flex; align-items:flex-end; gap:3px; height:72px; margin-top:8px; padding:0 2px;}
+  .bc-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:0;}
+  .bc-bar{width:100%; max-width:28px; border-radius:4px 4px 0 0; transition:height .35s; min-height:3px; position:relative; display:flex; align-items:center; justify-content:center;}
+  .bc-lbl{font-size:8px; color:var(--muted); margin-top:2px; font-weight:700;}
+  .bc-bar.sel{outline:2px solid var(--indigo); outline-offset:0;}
+  .bc-now{color:var(--indigo); font-weight:800;}
+  .bc-pct{font-size:7.5px; color:var(--muted); margin-bottom:1px;}
+  .bc-pct-in{font-size:8.5px; font-weight:800; color:#fff; line-height:1; text-shadow:0 0 2px rgba(0,0,0,.25);}
+
+  /* 复盘详情：移到下周按钮 */
+  .btn-nextwk{font-size:11px; padding:4px 9px; background:var(--soft); color:var(--indigo); border:none; border-radius:8px; font-weight:700; cursor:pointer; flex:0 0 auto;}
+
+  /* bottom nav - 4 tabs */
+  nav.bottom{position:fixed; left:0; right:0; bottom:0; background:#fff; box-shadow:0 -4px 18px rgba(30,41,59,.08); display:flex; max-width:480px; margin:0 auto; padding:7px 5px calc(7px + env(safe-area-inset-bottom)); border-radius:17px 17px 0 0;}
+  nav.bottom button{flex:1; background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10.5px; padding:5px 0;}
+  nav.bottom button .ic{font-size:18px;}
+  nav.bottom button.on{color:var(--indigo);}
+
+  /* modal */
+  .overlay{position:fixed; inset:0; background:rgba(15,23,42,.45); display:flex; align-items:end; justify-content:center; z-index:50;}
+  .sheet{background:#fff; width:100%; max-width:480px; border-radius:20px 20px 0 0; max-height:90vh; overflow:auto; padding:16px 14px calc(18px + env(safe-area-inset-bottom)); animation:up .2s ease;}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+  .sheet h2{margin:0 0 3px; font-size:17px; font-weight:800;}
+  .sheet .sub{color:var(--muted); font-size:12px; margin-bottom:11px;}
+
+  /* plan / edit rows inside modal */
+  .plan-bg{background:var(--soft); border-radius:11px; padding:8px 10px; font-size:12px; color:var(--indigo); margin:3px 0 7px; line-height:1.5;}
+  .plan-row{border-bottom:1px solid #eef2f7; padding:10px 0;}
+  .plan-row:last-child{border-bottom:none;}
+  .plan-in{width:100%; margin-bottom:7px; font-size:14px !important; padding:10px 12px !important;}
+  .plan-meta{display:flex; gap:7px; align-items:center; flex-wrap:wrap;}
+  .plan-line{display:flex; gap:6px; align-items:center; flex-wrap:nowrap; margin-bottom:7px;}
+  .plan-line .lbl{font-size:11px; color:var(--muted); flex:0 0 auto; white-space:nowrap;}
+  .plan-sel{width:auto; flex:0 0 auto; min-width:56px; text-align:center; padding:8px 8px !important; margin-bottom:0 !important;}
+  .del.sm{padding:5px 8px; font-size:11.5px; flex:0 0 auto;}
+
+  .toast{position:fixed; left:50%; top:16px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:9px 15px; border-radius:11px; font-size:12.5px; z-index:99; box-shadow:var(--shadow); opacity:0; transition:.25s; pointer-events:none; max-width:90%;}
+  .toast.show{opacity:1; top:24px;}
+  .empty{text-align:center; color:var(--muted); font-size:13px; padding:20px 8px;}
+  .hint{font-size:11px; color:var(--muted); margin-top:5px;}
+  .spinner{display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:5px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .sec-title{font-size:12.5px; font-weight:800; color:var(--muted); margin:7px 0 6px; letter-spacing:.4px;}
+  .refl-week{font-size:13px; line-height:1.6; color:var(--ink); white-space:pre-wrap; background:#f7f8fb; border-radius:10px; padding:10px; margin-bottom:8px;}
+  .refl-sub{font-size:11px; color:var(--muted); font-weight:700; margin:4px 0 6px;}
+  .refl-day{margin-bottom:7px;}
+  .refl-date{display:inline-block; font-size:11px; color:var(--indigo); font-weight:800; margin-bottom:2px;}
+  .refl-txt{font-size:12.5px; line-height:1.55; color:var(--ink); white-space:pre-wrap; background:#f7f8fb; border-radius:8px; padding:7px 9px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main id="app"></main>
+</div>
+
+<nav class="bottom" id="nav">
+  <button data-view="today" class="on"><span class="ic">📋</span>今天</button>
+  <button data-view="projects"><span class="ic">🎯</span>项目</button>
+  <button data-view="review"><span class="ic">📊</span>复盘</button>
+  <button data-view="settings"><span class="ic">⚙️</span>设置</button>
+</nav>
+
+<div id="modal"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================ 数据层 ============================ */
+const STORE_KEY = 'twelveWeekWorkbench.v2';
+const DAY_NAMES = ['一','二','三','四','五','六','日'];
+function defaultState(){
+  return { version:2, goals:[], currentWeek:1, currentDay: todayWeekday(), anchor:null, viewWeek:1,
+    settings:{ provider:'gemini', apiKey:'', model:'', baseUrl:'' },
+    habitLog:{}, taskLog:{}, indicatorLog:{}, journal:{}, weekJournal:{} };
+}
+function todayWeekday(){ const d=new Date(); let r=d.getDay()-1; return r<0?6:r; } // Mon=0 .. Sun=6
+// 真实日期工具
+function fmtDate(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function todayRealLabel(){ const d=new Date(); return fmtDate(d)+'（周'+DAY_NAMES[todayWeekday()]+'）'; }
+// 两个日期相差天数（按本地零点算，b-a）
+function diffDays(aStr,bDate){
+  const a=new Date(aStr+'T00:00:00');
+  const b=new Date(bDate.getFullYear()+'-'+String(bDate.getMonth()+1).padStart(2,'0')+'-'+String(bDate.getDate()).padStart(2,'0')+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+// 第 w 周对应的 7 个真实日期（按锚点推导；无锚点返回 []）
+function weekDates(w){
+  const a=state.anchor;
+  if(!a||!a.startDate) return [];
+  const base=new Date(a.startDate+'T00:00:00');
+  const out=[];
+  for(let d=0;d<7;d++){
+    const off=(w-(a.startWeek||1))*7 + (d-(a.startDay||0));
+    out.push(new Date(base.getTime()+off*86400000));
+  }
+  return out;
+}
+// 由锚点 + 真实日期推导「本周/今天」，并设置查看周
+function syncAnchor(){
+  const a=state.anchor;
+  if(a&&a.startDate){
+    const d=diffDays(a.startDate,new Date());
+    let wk=a.startWeek+Math.floor(d/7);
+    wk=Math.max(1,Math.min(12,wk));
+    let day=(((a.startDay||0)+d)%7+7)%7;
+    state.currentWeek=wk; state.currentDay=day;
+  } else {
+    state.currentWeek=1; state.currentDay=todayWeekday();
+  }
+  if(!state.viewWeek) state.viewWeek=state.currentWeek;
+}
+let state = load();
+const PERSONAL_ID = '__personal__';
+function ensurePersonal(){
+  if(!state.goals.find(g=>g.id===PERSONAL_ID)){
+    state.goals.push({id:PERSONAL_ID,title:'个人习惯',background:'',lagging:[],habits:[],tasks:[],_personal:true});
+    save();
+  }
+}
+ensurePersonal();
+syncAnchor();
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(s && s.goals) return migrate(s); }catch(e){}
+  return defaultState();
+}
+function migrate(s){
+  if(!s.version || s.version<2){
+    s.currentDay = s.currentDay!=null ? s.currentDay : todayWeekday();
+    if(s.anchor===undefined) s.anchor=null;
+    if(s.viewWeek===undefined) s.viewWeek=(s.currentWeek||1);
+    // 滞后指标迁移
+    (s.goals||[]).forEach(g=>{
+      if(typeof g.lagging==='string'){ g.lagging=g.lagging?[{id:uid(),name:g.lagging,target:null,dir:'up'}]:[]; }
+      if(!Array.isArray(g.lagging)) g.lagging=[];
+      g.lagging.forEach(it=>{
+        if(!it||typeof it==='string') it={id:uid(),name:String(it||''),target:null,dir:'up'};
+        if(!it.id) it.id=uid();
+        if(typeof it.name!=='string') it.name=(typeof it.text==='string')?it.text:String(it.name||'');
+        it.target=(it.target==null||it.target==='')?null:Number(it.target);
+        it.dir=(it.dir==='down')?'down':'up';
+      });
+      delete g.leading;
+      // 任务：补齐优先级/截止/必做字段
+      (g.tasks||[]).forEach(t=>{
+        if(!t.priority||!['low','mid','high'].includes(t.priority)) t.priority='mid';
+        if(t.due===undefined) t.due=null;
+        if(t.mustDo===undefined) t.mustDo=false;
+        if(!t.log) t.log={};
+      });
+      if(!Array.isArray(g.habits)) g.habits=[];
+      (g.habits||[]).forEach(hb=>{ if(hb.startDate===undefined) hb.startDate=null; if(!hb.log) hb.log={}; if(!Array.isArray(hb.weeks)) hb.weeks=[]; });
+    });
+    // habitLog: number → [bool×7]
+    if(s.habitLog) Object.keys(s.habitLog).forEach(hid=>{
+      const weeks=s.habitLog[hid]; if(!weeks||typeof weeks!=='object') return;
+      Object.keys(weeks).forEach(w=>{
+        const v=weeks[w];
+        if(typeof v==='number'){ weeks[w]=makeDays(v); }
+        else if(Array.isArray(v)&&v.length===7){ /* already new format */ }
+        else { weeks[w]=makeDays(0); }
+      });
+    });
+    s.version=2;
+  }
+  return s;
+}
+function makeDays(n){ const a=Array(7).fill(false); for(let i=0;i<Math.min(7,n);i++)a[i]=true; return a; }
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2000); }
+
+/* ============================ AI ============================ */
+const PROVIDERS = {
+  openai:{label:'OpenAI',base:'https://api.openai.com/v1',model:'gpt-4o-mini'},
+  deepseek:{label:'DeepSeek',base:'https://api.deepseek.com/v1',model:'deepseek-chat'},
+  groq:{label:'Groq',base:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile'},
+  gemini:{label:'Gemini',base:'https://generativelanguage.googleapis.com/v1beta',model:'gemini-2.0-flash'}
+};
+async function aiChat(system,user){
+  const s=state.settings; if(!s.apiKey) throw new Error('NO_KEY');
+  if(s.provider==='gemini'){
+    const url=`${s.baseUrl||PROVIDERS.gemini.base}/models/${s.model||PROVIDERS.gemini.model}:generateContent?key=${encodeURIComponent(s.apiKey)}`;
+    const body={contents:[{role:'user',parts:[{text:system+'\n\n'+user}]}],generationConfig:{responseMimeType:'application/json'}};
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json(); if(j.error) throw new Error(j.error.message||'Gemini 错误');
+    return j.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  }else{
+    const p=PROVIDERS[s.provider]||PROVIDERS.openai;
+    const url=`${s.baseUrl||p.base}/chat/completions`;
+    const body={model:s.model||p.model,temperature:0.7,messages:[{role:'system',content:system},{role:'user',content:user}]};
+    if(s.provider==='openai'||s.provider==='deepseek') body.response_format={type:'json_object'};
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},body:JSON.stringify(body)});
+    const j=await r.json(); if(j.error) throw new Error(j.error.message||'API 错误');
+    return j.choices?.[0]?.message?.content||'';
+  }
+}
+function parseJSON(text){
+  try{return JSON.parse(text);}catch(e){ const m=text.match(/\{[\s\S]*\}/); if(m){try{return JSON.parse(m[0]);}catch(e2){}} }
+  return null;
+}
+const SYS_PLAN=`你是《The 12 Week Year》（12周年度）方法论教练。用户会给你一个「任务目标」和「背景」，请一次性拆解为可执行的计划，只输出 JSON，不要任何解释或 Markdown 代码块。格式：
+{"lagging":[{"name":"测量维度","target":50,"dir":"up"}],"habits":[{"title":"习惯名","suggestedWeek":3,"perWeek":1}],"tasks":[{"title":"任务名","suggestedWeek":2}]}
+- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 取 "up"（越高越好）或 "down"（越低越好）。
+- habits：建议养成的习惯，3-6 条。suggestedWeek 为 1-12 的整数（从哪周开始）；perWeek 为该习惯每周建议次数（1-7）。
+- tasks：建议执行的具体任务，3-6 条。suggestedWeek 为 1-12 的整数（放在第几周）。
+请结合用户的背景，给出具体、可衡量、可行动的建议。`;
+
+/* ============================ 视图框架 ============================ */
+let view='today';
+let currentProjectId=null;
+let currentReviewGid=null;
+function render(){
+  document.getElementById('app').innerHTML =
+    view==='today'?viewToday():view==='projects'?viewProjects():view==='review'?viewReview():viewSettings();
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+  bindView();
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function ring(pct,color,sub){
+  pct=Math.max(0,Math.min(100,Math.round(pct)));
+  const r=44,c=2*Math.PI*r,off=c*(1-pct/100);
+  return `<svg class="ring" viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="${r}"/><circle class="ring-fg" cx="60" cy="60" r="${r}" transform="rotate(-90 60 60)" style="stroke:${color};stroke-dasharray:${c};stroke-dashoffset:${off}"/><text class="ring-pct" x="60" y="57">${pct}%</text><text class="ring-sub" x="60" y="76">${esc(sub)}</text></svg>`;
+}
+
+/* ============================ 工具函数 ============================ */
+function findGoal(id){ return state.goals.find(g=>g.id===id); }
+/* 今日感悟日期键 / 紧急判断 / 排序 / 连续打卡 / 必做 */
+function todayKey(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function isUrgent(t){ if(!t||!t.due)return false; return t.due<=todayKey(); }
+function sortTasksForToday(a,b){
+  const ua=isUrgent(a.t), ub=isUrgent(b.t);
+  if(ua!==ub) return ua?-1:1;
+  const pw={'high':3,'mid':2,'low':1};
+  const pa=pw[a.t.priority||'mid'], pb=pw[b.t.priority||'mid'];
+  if(pa!==pb) return pb-pa;
+  return 0;
+}
+function setMustDo(gid,tid,val){
+  const g=findGoal(gid); if(!g)return;
+  const tk=g.tasks.find(x=>x.id===tid); if(!tk)return;
+  if(!!tk.mustDo===!!val)return;
+  tk.mustDo=!!val; save(); render();
+  toast(val?'已加入今天必做':'已移出今天必做');
+}
+function habitActiveInWeek(hb,w){ return Array.isArray(hb.weeks)&&hb.weeks.includes(w); }
+function weekPlan(w){
+  const tasks=[],habits=[];
+  state.goals.forEach(g=>{
+    (g.tasks||[]).forEach(t=>{ if(t.week===w) tasks.push({g,t}); });
+    (g.habits||[]).forEach(hb=>{ if(habitActiveInWeek(hb,w)) habits.push({g,hb}); });
+  });
+  return{tasks,habits};
+}
+// 习惯本周完成天数（新数据模型：数组）
+function habitDoneCount(hb,w){
+  const d=getHabitDays(hb.id,w); return d?d.filter(Boolean).length:0;
+}
+function getHabitDays(hid,w){
+  state.habitLog[hid]=state.habitLog[hid]||{};
+  if(!state.habitLog[hid][w]||!Array.isArray(state.habitLog[hid][w])) state.habitLog[hid][w]=makeDays(0);
+  return state.habitLog[hid][w];
+}
+function setHabitDay(hid,w,d,val){
+  const arr=getHabitDays(hid,w); arr[d]=!!val; save();
+}
+// 本周评分
+function scoreWeek(w){
+  const{tasks,habits}=weekPlan(w);
+  const td=tasks.filter(x=>x.t.log&&x.t.log[w]).length,tp=tasks.length;
+  let hp=0,ha=0;
+  habits.forEach(x=>{
+    hp+=(x.hb.perWeek||1);
+    ha+=habitDoneCount(x.hb,w);
+  });
+  return{
+    tasksPct:tp?Math.round(td/tp*100):null,tasksDone:td,tasksDue:tp,
+    habitsPct:hp?Math.round(ha/hp*100):null,habitsDone:ha,habitsPlan:hp
+  };
+}
+function lagPct(it,actual){
+  const t=Number(it.target); if(!t||actual===''||actual==null)return null;
+  const a=Number(actual); if(isNaN(a))return null;
+  var raw = (it.dir==='down') ? (a<=0?100:(t/a)*100) : ((a/t)*100);
+  return Math.round(Math.max(0,raw));
+}
+// 统一配色（按《12周工作法》：85% 即出色=绿，50-85%=黄，<50%=红；无数据=灰）
+function scoreColor(pct){
+  if(pct===null||pct===''||pct===undefined) return 'var(--muted)';
+  pct=Number(pct);
+  if(pct>=85) return 'var(--emerald)';
+  if(pct>=50) return 'var(--amber)';
+  return 'var(--rose)';
+}
+function scoreFill(pct){
+  if(pct===null||pct===''||pct===undefined) return '#eef2f7';
+  pct=Number(pct);
+  if(pct>=85) return 'linear-gradient(90deg,#10b981,#34d399)';
+  if(pct>=50) return 'linear-gradient(90deg,#f59e0b,#fbbf24)';
+  return 'linear-gradient(90deg,#ef4444,#f87171)';
+}
+// 单项目进度汇总
+function projectWeekScore(g,w){
+  const tasks=(g.tasks||[]).filter(t=>t.week===w);
+  const habits=(g.habits||[]).filter(hb=>habitActiveInWeek(hb,w));
+  const td=tasks.filter(t=>t.log&&t.log[w]).length, tp=tasks.length;
+  let hp=0,ha=0;
+  habits.forEach(hb=>{ hp+=(hb.perWeek||1); ha+=habitDoneCount(hb,w); });
+  return{
+    tasksPct:tp?Math.round(td/tp*100):null, tasksDone:td, tasksDue:tp,
+    habitsPct:hp?Math.round(ha/hp*100):null, habitsDone:ha, habitsPlan:hp
+  };
+}
+
+/* ============================ 今天视图 ============================ */
+function viewToday(){
+  const w=state.currentWeek,d=state.currentDay;
+  const{tasks,habits}=weekPlan(w);
+  const sc=scoreWeek(w);
+  // 分离未完成/已完成
+  const undoneTasks=tasks.filter(x=>!x.t.log||!x.t.log[w]);
+  const doneTasks=tasks.filter(x=>x.t.log&&x.t.log[w]);
+  const dayLabel=['周一','周二','周三','周四','周五','周六','周日'][d];
+  const realLabel=todayRealLabel();
+  let h=`<div class="page-header"><div class="ph-row"><div><h1>📋 今天 · ${dayLabel}</h1><p>${realLabel} · 第 ${w} 周</p></div><button class="help-btn" data-act="help">📖</button></div></div>`;
+  h+=`<div class="pad">`;
+
+  // 待办任务：今天必做（用户拖动决定）+ 本周待办（按紧急/优先级排序）
+  const mustDo = undoneTasks.filter(x=>x.t.mustDo);
+  const rest = undoneTasks.filter(x=>!x.t.mustDo).sort(sortTasksForToday);
+  h+=`<div class="card"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">✅ 待办任务 ${undoneTasks.length>0?`(${undoneTasks.length})`:''}</h3><button class="btn sm" data-act="today-add-task" style="flex:0 0 auto">＋ 添加</button></div>`;
+  h+=`<div class="mini-bar"><i style="width:${sc.tasksPct||0}%;background:${scoreFill(sc.tasksPct)}"></i></div>`;
+  h+=`<div class="mini-cap">本周任务完成度 ${sc.tasksPct!=null?sc.tasksPct+'%':'—'} · ${sc.tasksDone}/${sc.tasksDue}</div>`;
+  if(tasks.length===0) h+=`<p class="empty">今天没有待办任务。</p>`;
+  else{
+    // 今天必做（始终渲染为拖拽目标，即使为空也能拖入）
+    h+=`<div class="mustdo-zone" data-drop="mustdo"><div class="md-title">🔴 今天必做 (${mustDo.length})</div>`;
+    mustDo.forEach(x=>{ h+=todayTaskItem(x,w); });
+    if(mustDo.length===0) h+=`<div class="md-empty">把下面「本周待办」里的任务拖到这里</div>`;
+    h+=`</div>`;
+    // 本周待办（拖回这里可取消「今天必做」）
+    h+=`<div class="md-rest-title">📋 本周待办 (${rest.length})</div>`;
+    h+=`<div data-drop="rest">`;
+    if(rest.length>0){
+      rest.forEach(x=>{ h+=todayTaskItem(x,w); });
+    } else if(mustDo.length>0){
+      h+=`<div class="md-empty">其余任务都已加入「今天必做」🎉</div>`;
+    }
+    h+=`</div>`;
+    // 已完成
+    if(doneTasks.length>0){
+      if(undoneTasks.length===0) h+=`<p class="muted" style="padding:2px 0 4px;margin:0">🎉 今天任务都完成了！</p>`;
+      h+=`<div class="done-list">`;
+      doneTasks.forEach(x=>{
+        h+=`<div class="item done" data-act="task-toggle" data-g="${x.g.id}" data-t="${x.t.id}" data-w="${w}">
+          <div class="chk">✓</div><div class="it-title">${esc(x.t.title)}</div><span class="itag">${esc(trunc(x.g.title,6))}</span></div>`;
+      });
+      h+=`</div>`;
+    }
+  }
+  h+=`</div>`;
+
+  // 习惯打卡
+  h+=`<div class="card"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">🔁 今日习惯 ${habits.length>0?`(${habits.length})`:''}</h3><button class="btn sm" data-act="today-add-habit" style="flex:0 0 auto">＋ 添加</button></div>`;
+  h+=`<div class="mini-bar"><i style="width:${sc.habitsPct||0}%;background:${scoreFill(sc.habitsPct)}"></i></div>`;
+  h+=`<div class="mini-cap">本周习惯完成度 ${sc.habitsPct!=null?sc.habitsPct+'%':'—'} · ${sc.habitsDone}/${sc.habitsPlan}</div>`;
+  if(habits.length===0) h+=`<p class="empty">本周没有安排习惯。</p>`;
+  else{
+    h+=`<div class="day-names">${DAY_NAMES.map((n,i)=>`<span${i===d?' style="color:var(--indigo);font-weight:800;"':''}>${n}</span>`).join('')}</div>`;
+    habits.forEach(x=>{
+      const days=getHabitDays(x.hb.id,w);
+      const done=days.filter(Boolean).length;
+      const plan=x.hb.perWeek||1;
+      const pct=plan?Math.round(done/plan*100):0;
+      h+=`<div class="habit-item" data-gid="${x.g.id}" data-hid="${x.hb.id}"><div class="h-head"><div class="h-title">${esc(x.hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">计划每周 ${plan} 次 · <span class="itag" style="display:inline-block;margin:0">${esc(trunc(x.g.title,6))}</span></div><div class="day-grid">`;
+      for(let di=0;di<7;di++){
+        const isOn=days[di];
+        const cls=isOn?' on':'';
+        const fut=(di>d)?' future':'';
+        h+=`<div class="day-chk${cls}${fut}" data-act="habit-day" data-hid="${x.hb.id}" data-w="${w}" data-d="${di}">${isOn?'✓':''}</div>`;
+      }
+      h+=`</div></div>`;
+    });
+  }
+  h+=`</div>`;
+
+  // 快捷提示
+  if(tasks.length===0&&habits.length===0)
+    h+=`<div class="card"><p class="muted">今天还没有安排任何内容。去「项目」页添加目标和任务吧。</p><button class="btn primary" data-act="go-projects" style="margin-top:8px">去添加 →</button></div>`;
+
+  // 今日感悟（按日期自动保存）
+  const jtk=todayKey();
+  const jv=(state.journal&&state.journal[jtk])||'';
+  h+=`<div class="card"><details class="jbox"${jv?' open':''}>
+    <summary class="jsum">📝 今日感悟${jv?' · 已写':''}</summary>
+    <textarea class="jarea" data-journal="${jtk}" placeholder="一天结束了，写写今天的感悟吧…">${esc(jv)}</textarea>
+    <div class="jhint">自动保存 · ${jtk}</div>
+  </details></div>`;
+
+  h+=`</div>`; return h;
+}
+function todayTaskItem(x,w){
+  const t=x.t;
+  const pr=t.priority||'mid';
+  const prColor=pr==='high'?'var(--rose)':pr==='low'?'var(--muted)':'var(--amber)';
+  const urg=isUrgent(t);
+  const dueTxt=t.due?`📅 ${t.due.slice(5)}`:'';
+  return `<div class="item" draggable="true" data-drag-task="${t.id}" data-drag-gid="${x.g.id}" data-act="task-toggle" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}" style="${urg?'border-left:3px solid var(--rose);':''}">
+    <div class="chk"></div>
+    <div class="it-title"><span class="pdot" style="background:${prColor}"></span>${esc(t.title)} ${urg?`<span class="due-badge urgent">🔴 今天到期</span>`:(dueTxt?`<span class="due-badge">${dueTxt}</span>`:'')}</div>
+    <span class="itag">${esc(trunc(x.g.title,6))}</span>
+  </div>`;
+}
+function trunc(s,len){ return (s||'').length>len?s.slice(0,len)+'…':s; }
+
+/* ============================ 项目视图 ============================ */
+function viewProjects(){
+  if(currentProjectId) return viewProjectDetail(currentProjectId);
+  const all=state.goals;
+  const personal=all.find(g=>g.id===PERSONAL_ID);
+  const g=all.filter(g=>g.id!==PERSONAL_ID);
+  let h=`<div class="page-header"><div class="ph-row"><div><h1>🎯 我的项目</h1><p>${g.length}/5 个目标</p></div><button class="help-btn" data-act="help">📖</button></div></div>`;
+  h+=`<div class="pad">`;
+  if(g.length<5) h+=`<div class="card"><p class="muted">设定 3-5 个项目（不设分类）。每个项目用 AI 拆解成习惯与任务，并配置滞后指标。</p><button class="btn primary full" data-act="goal-add" style="margin-top:8px">+ 新建项目</button></div>`;
+  if(g.length===0) h+=`<div class="empty">还没有项目。点击上方「新建项目」开始吧。</div>`;
+  const w=state.currentWeek;
+  // —— 所有项目 ——
+  g.forEach(goal=>{
+    const lags=(goal.lagging||[]);
+    // 滞后指标：显示名称 + 目标值，用填充条表示进度（不显示百分比数字）
+    let lagHtml;
+    if(lags.length>0){
+      lagHtml=`<div class="lag-tags">`+lags.map(it=>{
+        const rec=(state.indicatorLog[goal.id]&&state.indicatorLog[goal.id][w])||{};
+        const pct=lagPct(it,rec[it.id]);
+        const fill=pct!=null?pct:0;
+        const col=scoreColor(pct);
+        return `<span class="ltag"><span class="ltag-fill" style="width:${fill}%;background:${col}"></span><span class="ltag-txt">${esc(it.name||'未命名')} ${it.target!=null?esc(it.target):''}</span></span>`;
+      }).join('')+`</div>`;
+    } else {
+      lagHtml=`<div class="pmeta" style="margin-top:5px">尚无滞后指标 · 点下方编辑添加</div>`;
+    }
+    h+=`<div class="proj">
+      <div class="proj-head">
+        <div class="ptitle" data-act="proj-open" data-gid="${goal.id}" style="cursor:pointer;flex:1">${esc(goal.title)}</div>
+        <button class="btn sm proj-edit-btn" data-act="proj-open" data-gid="${goal.id}">✏️ 编辑项目</button>
+      </div>
+      ${goal.background?`<div class="pbg-toggle" data-act="toggle-pbg" data-gid="${goal.id}">📌 查看背景 ▾</div><div class="pbg-body" id="pbg-${goal.id}">${esc(goal.background)}</div>`:''}
+      ${lagHtml}
+    </div>`;
+  });
+  // —— 个人习惯（独立于项目） ——
+  h+=`<div class="card"><p class="muted">🔆 <b>个人习惯</b> 不与任何项目关联，只记录你想长期养成的习惯（如运动、冥想、读书）。</p><button class="btn primary full" data-act="personal-habit-add" style="margin-top:8px">🔆 新建个人习惯</button></div>`;
+  if(personal&&(personal.habits||[]).length>0){
+    h+=`<div class="card"><div class="ph-list">`;
+    (personal.habits||[]).forEach(hb=>{
+      const days=getHabitDays(hb.id,w);
+      const done=days.filter(Boolean).length;
+      const plan=hb.perWeek||1;
+      h+=`<div class="ph-item" data-gid="${PERSONAL_ID}" data-hid="${hb.id}"><div class="ph-name">${esc(hb.title)}</div><div class="ph-sub">本周 ${done}/${plan} 次 · 始于 ${hb.startDate||'—'}</div></div>`;
+    });
+    h+=`</div><button class="btn sm full" data-act="proj-open" data-gid="${PERSONAL_ID}" style="margin-top:8px">管理 / 打卡 →</button></div>`;
+  } else {
+    h+=`<div class="card"><p class="empty" style="padding:6px 0">还没有个人习惯，点上方「新建个人习惯」添加。</p></div>`;
+  }
+  h+=`</div>`; return h;
+}
+
+/* 项目详情页 */
+function viewProjectDetail(gid){
+  const g=findGoal(gid);
+  if(!g){currentProjectId=null;return viewProjects();}
+  const w=state.currentWeek;
+  const lags=g.lagging||[];
+  let h='';
+  h+=`<div class="page-header"><div class="ph-row"><div><h1>🎯 ${esc(g.title)}</h1><p>第 ${w} 周 · 项目详情</p></div><button class="help-btn" data-act="proj-back">← 返回</button></div></div>`;
+  h+=`<div class="pad">`;
+
+  // 区域一：滞后指标（可直接在此填写实际值）
+  h+=`<div class="card"><h3>📈 滞后指标</h3><p class="muted" style="font-size:11px;margin:-3px 0 6px">填入实际值后自动计算达成率</p>`;
+  if(lags.length===0) h+=`<p class="empty">还没有滞后指标。点下方「管理」添加。</p>`;
+  else lags.forEach(it=>{
+    const rec=(state.indicatorLog[g.id]&&state.indicatorLog[g.id][w])||{};
+    const actual=rec[it.id];
+    const pct=lagPct(it,actual);
+    const dirL=it.dir==='down'?'↓越低越好':'↑越高越好';
+    const fill=pct!=null?pct:0;
+    const col=scoreFill(pct);
+    h+=`<div class="lag-row">
+      <div class="lag-name">${esc(it.name||'未命名')}<span class="lag-pct2" style="color:${scoreColor(pct)};flex:0 0 auto;margin-left:auto">${pct!=null?pct+'%':'—'}</span></div>
+      <div class="lag-sub">目标 ${it.target!=null?esc(it.target):'?'} · ${dirL}</div>
+      <div class="lag-input-row">
+        <input class="lag-actual2" data-lagactual="1" data-goal="${g.id}" data-lag="${it.id}" data-w="${w}" type="number" placeholder="输入实际值…" value="${actual!=null?esc(actual):''}"/>
+      </div>
+      <div class="pp-bar"><i style="width:${fill}%;background:${col}"></i></div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // 区域三：习惯（本周）+ 任务（按周）
+  const wkHabits=(g.habits||[]).filter(hb=>habitActiveInWeek(hb,w));
+  h+=`<div class="card"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">🔁 本周习惯 (${wkHabits.length})</h3><button class="btn sm" data-act="detail-add-habit" data-gid="${g.id}" style="flex:0 0 auto">＋ 添加</button></div>`;
+  if(wkHabits.length===0) h+=`<p class="empty">本周没有习惯。</p>`;
+  else{
+    h+=`<div class="day-names">${DAY_NAMES.map((n,i)=>`<span${i===state.currentDay?' style="color:var(--indigo);font-weight:800;"':''}>${n}</span>`).join('')}</div>`;
+    wkHabits.forEach(hb=>{
+      const days=getHabitDays(hb.id,w);
+      const done=days.filter(Boolean).length;
+      const plan=hb.perWeek||1;
+      const pct=plan?Math.round(done/plan*100):0;
+      h+=`<div class="habit-item" data-gid="${g.id}" data-hid="${hb.id}"><div class="h-head"><div class="h-title">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">始于 ${hb.startDate||'—'} · 本周 ${done}/${plan} 次</div><div class="day-grid">`;
+      for(let di=0;di<7;di++){const isOn=days[di];const cls=isOn?' on':'';const fut=(di>state.currentDay)?' future':'';h+=`<div class="day-chk${cls}${fut}" data-act="habit-day" data-hid="${hb.id}" data-w="${w}" data-d="${di}">${isOn?'✓':''}</div>`;}
+      h+=`</div></div>`;
+    });
+  }
+  h+=`</div>`;
+
+  h+=`<div class="card"><h3 style="margin:0;margin-bottom:6px">✅ 任务（按周）<span class="muted" style="font-size:11px;font-weight:500;margin-left:6px">拖动任务到其他周可移动</span></h3>`;
+  let anyTask=false;
+  for(let wi=1;wi<=12;wi++){
+    const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
+    // 即使该周没任务也显示周标题（方便拖入 + 添加）
+    const isCur=(wi===w);
+    h+=`<div class="wk-group" data-wk-group="${g.id}-${wi}">
+      <div class="wk-toggle" data-act="wk-toggle" data-gid="${g.id}" data-wk="${wi}">
+        <span>第 ${wi} 周${isCur?' · 本周':''}${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <button class="wk-add" data-act="wk-add-task" data-gid="${g.id}" data-wk="${wi}">＋</button>
+          <span class="wk-arrow">${isCur?'▾':'▸'}</span>
+        </span>
+      </div>
+      <div class="wk-body${isCur?' show':''}" id="wk-${g.id}-${wi}">`;
+    if(wkTasks.length>0){
+      anyTask=true;
+      wkTasks.forEach(t=>{
+        const done=!!(t.log&&t.log[wi]);
+        h+=`<div class="item${done?' done':''}" draggable="true" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="chk">${done?'✓':''}</div><div class="it-title">${esc(t.title)}</div></div>`;
+      });
+    }
+    h+=`</div></div>`;
+  }
+  if(!anyTask) h+=`<p class="empty">还没有任务。点各周的 ＋ 添加。</p>`;
+  h+=`</div>`;
+
+  h+=`<div class="pacts" style="padding:0 14px 6px"><button class="btn sm danger" data-act="proj-del" data-gid="${g.id}">🗑 删除项目</button></div>`;
+  h+=`</div>`; return h;
+}
+
+/* ============================ 复盘视图 ============================ */
+function viewReview(){
+  if(currentReviewGid) return viewReviewDetail(currentReviewGid);
+  const w=state.viewWeek;
+  const cyclePct=Math.round(w/12*100);
+  let h=`<div class="page-header"><div class="ph-row"><div><h1>📊 第 ${w} 周复盘</h1><p>共 12 周 · 进度 ${cyclePct}%</p></div><button class="help-btn" data-act="help">📖</button></div></div>`;
+  h+=`<div class="pad">`;
+  // 周导航
+  h+=`<div class="card"><div class="weekbar">
+    <button class="btn sm" data-act="week-prev"${w<=1?' disabled':''}>‹ 上周</button>
+    <button class="btn sm" data-act="week-now">本周</button>
+    <button class="btn sm" data-act="week-next"${w>=12?' disabled':''}>下周 ›</button>
+  </div><div class="progress"><i style="width:${cyclePct}%"></i></div>
+  <div class="weekdots">${Array.from({length:12},(_,i)=>{const n=i+1;const cs=scoreWeek(n);const cls=n===w?'on':(cs.tasksPct!==null||cs.habitsPct!==null?'done':'');return`<button class="dot ${cls}" data-act="week-set" data-w="${n}">${n}</button>`;}).join('')}</div></div>`;
+
+  // 本周感悟（按周保存，独立于项目）
+  const wjv=(state.weekJournal&&state.weekJournal[w])||'';
+  h+=`<div class="card"><details class="jbox"${wjv?' open':''}>
+    <summary class="jsum">📝 本周感悟${wjv?' · 已写':''}</summary>
+    <textarea class="jarea" data-weekjournal="${w}" placeholder="这一周执行得怎么样？卡点在哪、下周怎么调？…">${esc(wjv)}</textarea>
+    <div class="jhint">按第 ${w} 周自动保存</div>
+  </details></div>`;
+
+  if(state.goals.length===0){
+    h+=`<div class="empty">还没有项目。去「项目」页添加吧。</div>`;
+  } else {
+    // 按项目分卡片
+    state.goals.forEach(g=>{
+      const lags=g.lagging||[];
+      // 滞后指标精简标签（个人习惯无滞后指标，跳过）
+      let lagHtml='';
+      if(g._personal){
+        lagHtml='';
+      } else if(lags.length>0){
+        lagHtml=`<div class="rev-lag-mini">`+lags.map(it=>{
+          const rec=(state.indicatorLog[g.id]&&state.indicatorLog[g.id][w])||{};
+          const pct=lagPct(it,rec[it.id]);
+          const col=scoreColor(pct);
+          return `<span class="rlm-tag" style="color:${col};border-color:${col}22;background:${col}11">${esc(it.name||'?')} ${pct!=null?pct+'%':'—'}</span>`;
+        }).join('')+`</div>`;
+      } else {
+        lagHtml=`<div class="pmeta" style="font-size:10.5px;color:var(--muted)">尚无滞后指标 · 点开设置</div>`;
+      }
+      // 每周引领指标柱状图（颜色按真实时间：未到的周=灰，已到的周按完成度红/黄/绿；选中周描边，本周固定标注）
+      const curW=state.currentWeek;
+      let bars='';
+      for(let wi=1;wi<=12;wi++){
+        const sc=projectWeekScore(g,wi);
+        const avg=(sc.tasksPct!=null&&sc.habitsPct!=null)?Math.round((sc.tasksPct+sc.habitsPct)/2):(sc.tasksPct||sc.habitsPct||0);
+        const bh=Math.max(4,Math.round(avg*0.68));
+        const isSel=(wi===w);        // 当前查看/选中的周 → 描边
+        const isNow=(wi===curW);     // 真实本周（固定，跟随日期）
+        const isFuture=(wi>curW);    // 真实时间还没到的周 → 灰色
+        const bCol=isFuture?'#cbd5e1':(avg>=85?'#10b981':avg>=50?'#f59e0b':'#ef4444');
+        bars+=`<div class="bc-col" data-act="rev-bar" data-gid="${g.id}" data-wk="${wi}" style="cursor:pointer">
+          <div class="bc-bar${isSel?' sel':''}" style="height:${bh}px;background:${bCol}"><span class="bc-pct-in"${isFuture?' style="color:var(--muted)"':''}>${avg>0?avg:''}</span></div>
+          <span class="bc-lbl">${wi}${isNow?'<span class="bc-now">·本周</span>':''}</span>
+        </div>`;
+      }
+
+      h+=`<div class="rev-card">
+        <button class="rev-detail-btn" data-act="rev-week-detail" data-gid="${g.id}">查看该周详情 ›</button>
+        <div class="rctitle">${esc(g.title)}</div>
+        ${lagHtml}
+        <div class="bar-chart">${bars}</div>
+        <div class="muted" style="font-size:9.5px;text-align:center;margin-top:2px">↑ 每周引领指标完成度（柱高=%）· 点柱子看该周详情</div>
+      </div>`;
+    });
+  }
+
+  h+=`</div>`; return h;
+}
+
+/* 复盘详情页（点击项目卡进入） */
+function viewReviewDetail(gid){
+  const g=findGoal(gid);
+  if(!g){currentReviewGid=null;return viewReview();}
+  const w=state.viewWeek;
+  const sc=projectWeekScore(g,w);
+  const lags=g.lagging||[];
+
+  let h=`<div class="page-header"><div class="ph-row"><div><h1>📊 ${esc(g.title)}</h1><p>第 ${w} 周复盘详情</p></div><button class="help-btn" data-act="review-back">← 返回</button></div></div>`;
+  h+=`<div class="pad">`;
+
+  // 区域一：滞后指标（可填实际值）
+  h+=`<div class="card"><h3>📈 滞后指标登记</h3>`;
+  if(lags.length===0) h+=`<p class="empty">还没有滞后指标。去「项目」页编辑添加。</p>`;
+  else{
+    lags.forEach(it=>{
+      const rec=(state.indicatorLog[g.id]&&state.indicatorLog[g.id][w])||{};
+      const actual=rec[it.id];
+      const pct=lagPct(it,actual);
+      const dirL=it.dir==='down'?'↓越低越好':'↑越高越好';
+      const fill=pct!=null?pct:0;
+      const col=scoreFill(pct);
+      h+=`<div class="lag-row">
+        <div class="lag-name">${esc(it.name||'未命名')}<span class="lag-pct2" style="color:${scoreColor(pct)};flex:0 0 auto;margin-left:auto">${pct!=null?pct+'%':'—'}</span></div>
+        <div class="lag-sub">目标 ${it.target!=null?esc(it.target):'?'} · ${dirL}</div>
+        <div class="lag-input-row">
+          <input class="lag-actual2" data-lagactual="1" data-goal="${g.id}" data-lag="${it.id}" data-w="${w}" type="number" placeholder="实际值" value="${actual!=null?esc(actual):''}"/>
+        </div>
+        <div class="pp-bar"><i style="width:${fill}%;background:${col}"></i></div>
+      </div>`;
+    });
+    h+=`<p class="hint">填实际值后自动算达成率</p>`;
+  }
+  h+=`</div>`;
+
+  // 区域二：本周任务（完成 / 未完成 + 移到下周）
+  const wkTasks=(g.tasks||[]).filter(t=>t.week===w);
+  const doneTasks=wkTasks.filter(t=>!!(t.log&&t.log[w]));
+  const undoneTasks=wkTasks.filter(t=>!t.log||!t.log[w]);
+  const taskPct=sc.tasksPct||0;
+
+  h+=`<div class="card"><h3>✅ 本周任务 (${wkTasks.length})</h3>
+    <div class="pp-info"><span class="pp-label">完成 ${doneTasks.length}/${wkTasks.length}</span><span class="pp-pct" style="color:${scoreColor(taskPct)}">${taskPct}%</span></div>
+    <div class="pp-bar"><i style="width:${taskPct}%;background:${scoreFill(taskPct)}"></i></div>`;
+
+  if(wkTasks.length===0) h+=`<p class="empty">本周没有安排任务。</p>`;
+  else{
+    if(doneTasks.length>0){
+      h+=`<div class="sec-title" style="margin-top:8px">已完成 (${doneTasks.length})</div>`;
+      doneTasks.forEach(t=>{
+        h+=`<div class="item done" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk">✓</div><div class="it-title">${esc(t.title)}</div></div>`;
+      });
+    }
+    if(undoneTasks.length>0){
+      h+=`<div class="sec-title" style="margin-top:8px">未完成 (${undoneTasks.length})</div>`;
+      undoneTasks.forEach(t=>{
+        h+=`<div class="item" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk"></div><div class="it-title">${esc(t.title)}</div><button class="btn-nextwk" data-act="task-move-next" data-gid="${g.id}" data-tid="${t.id}" data-w="${w}">复制到下一週 →</button></div>`;
+      });
+    }
+  }
+  h+=`</div>`;
+
+  // 区域三：本周习惯
+  const wkHabits=(g.habits||[]).filter(hb=>habitActiveInWeek(hb,w));
+  const habitPct=sc.habitsPct||0;
+
+  h+=`<div class="card"><h3>🔁 本周习惯 (${wkHabits.length})</h3>
+    <div class="pp-info"><span class="pp-label">完成 ${sc.habitsDone}/${sc.habitsPlan}次</span><span class="pp-pct" style="color:${scoreColor(habitPct)}">${habitPct}%</span></div>
+    <div class="pp-bar"><i style="width:${habitPct}%;background:${scoreFill(habitPct)}"></i></div>`;
+
+  if(wkHabits.length===0) h+=`<p class="empty">本周没有习惯。</p>`;
+  else{
+    h+=`<div class="day-names">${DAY_NAMES.map((n,i)=>`<span${i===state.currentDay?' style="color:var(--indigo);font-weight:800;"':''}>${n}</span>`).join('')}</div>`;
+    wkHabits.forEach(hb=>{
+      const days=getHabitDays(hb.id,w);
+      const done=days.filter(Boolean).length;
+      const plan=hb.perWeek||1;
+      const pct=plan?Math.round(done/plan*100):0;
+      h+=`<div class="habit-item"><div class="h-head"><div class="h-title">${esc(hb.title)}</div><div class="h-pct">${pct}%</div></div><div class="h-sub">${done}/${plan}次</div><div class="day-grid">`;
+      for(let di=0;di<7;di++){const isOn=days[di];const cls=isOn?' on':'';const fut=(di>state.currentDay)?' future':'';h+=`<div class="day-chk${cls}${fut}" data-act="habit-day" data-hid="${hb.id}" data-w="${w}" data-d="${di}">${isOn?'✓':''}</div>`;}
+      h+=`</div></div>`;
+    });
+  }
+  h+=`</div>`;
+  // 区域四：本周感悟（每周 + 每日，按日期）—— 独立于「是否有习惯」，始终渲染
+  const wjv=(state.weekJournal&&state.weekJournal[w])||'';
+  const dates=weekDates(w);
+  const dailyList=dates.map(dt=>{ const k=fmtDate(dt); const v=(state.journal&&state.journal[k])||''; return v?{k,v,dt}:null; }).filter(Boolean);
+  let refl=`<div class="card"><h3>📝 本周感悟</h3>`;
+  if(!wjv && dailyList.length===0){ refl+=`<p class="empty">这一周还没有写任何感悟。</p>`; }
+  else{
+    if(wjv) refl+=`<div class="refl-week">${esc(wjv)}</div>`;
+    if(dailyList.length>0){
+      refl+=`<div class="refl-sub">🗒 每日感悟（按日期）</div>`;
+      dailyList.forEach(o=>{
+        const wd=DAY_NAMES[((o.dt.getDay()+6)%7)];
+        refl+=`<div class="refl-day"><span class="refl-date">${o.k} · 周${wd}</span><div class="refl-txt">${esc(o.v)}</div></div>`;
+      });
+    }
+  }
+  refl+=`</div>`;
+  h+=refl;
+  h+=`</div>`;
+  return h;
+}
+
+/* ============================ 设置视图 ============================ */
+function viewSettings(){
+  const s=state.settings;
+  const provOpts=Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}"${s.provider===k?' selected':''}>${v.label}</option>`).join('');
+  let h=`<div class="pad">`;
+  // 12 周时间锚点（所有项目共用）
+  const a=state.anchor||{};
+  const aw=a.startWeek||1;
+  const ad=(a.startDay!=null)?a.startDay:todayWeekday();
+  const adate=a.startDate||fmtDate(new Date());
+  const wkOpts=Array.from({length:12},(_,i)=>`<option value="${i+1}"${i+1===aw?' selected':''}>第 ${i+1} 周</option>`).join('');
+  const dayOpts=DAY_NAMES.map((n,i)=>`<option value="${i}"${i===ad?' selected':''}>周${n}</option>`).join('');
+  h+=`<div class="card"><h3>📅 12 周时间锚点</h3>
+    <p class="muted">把 App 和手机真实日期绑定。绑定后「本周」会随日期自动前进，无需手动选周；所有项目共用这一个锚点。</p>
+    <div class="muted" style="margin:4px 0 8px">今天真实日期：<b>${todayRealLabel()}</b></div>
+    <label class="fld">今天是 12 周里的第几周</label>
+    <select id="anc-week">${wkOpts}</select>
+    <label class="fld">今天是这一周的第几天</label>
+    <select id="anc-day">${dayOpts}</select>
+    <label class="fld">起始日期（用于校准，默认今天）</label>
+    <input id="anc-date" type="date" value="${adate}"/>
+    <button class="btn primary full" data-act="anchor-save" style="margin-top:8px">保存锚点</button>
+    ${state.anchor?'<div class="muted" style="font-size:11px;margin-top:6px">已绑定：第 '+aw+' 周 · 周'+DAY_NAMES[ad]+' 起（'+adate+'）</div>':''}
+  </div>`;
+  h+=`<div class="card"><h3>⚙️ AI 设置</h3><p class="muted">路线 C：纯真 AI，必填 API Key，全程联网调用大模型。</p>
+    <label class="fld">服务商</label><select id="set-provider" data-act="provider-change">${provOpts}</select>
+    <label class="fld">API Key</label><input id="set-key" type="password" placeholder="粘贴你的 API Key" value="${esc(s.apiKey)}"/>
+    <label class="fld">模型（留空用默认）</label><input id="set-model" placeholder="如 ${PROVIDERS[s.provider].model}" value="${esc(s.model)}"/>
+    <label class="fld">接口地址（留空用默认）</label><input id="set-base" placeholder="${PROVIDERS[s.provider].base}" value="${esc(s.baseUrl)}"/>
+    <button class="btn primary full" data-act="set-save" style="margin-top:10px">保存设置</button>
+    <button class="btn full" data-act="set-test" style="margin-top:6px">测试连接</button>
+  </div>`;
+  h+=`<div class="card"><h3>💾 数据</h3><p class="muted">本地存储于本浏览器。导出可备份 / 在另一台设备导入。</p>
+    <div class="row" style="margin-top:6px"><button class="btn full" data-act="export">导出 JSON</button><button class="btn full" data-act="import">导入 JSON</button></div>
+    <button class="btn danger full" data-act="reset" style="margin-top:6px">清空全部数据</button>
+  </div>`;
+  h+=`<div class="card"><h3>💡 关于</h3><p class="muted">基于《The 12 Week Year》方法论：把 1 年目标压进 12 周，用滞后指标看结果、引领指标管行动，每周复盘执行度。</p></div>`;
+  h+=`</div>`; return h;
+}
+
+/* ============================ 事件绑定 ============================ */
+function bindView(){
+  // 滞后指标实际值输入
+  document.querySelectorAll('[data-lagactual]').forEach(el=>{
+    el.addEventListener('input',e=>{
+      const g=findGoal(e.target.dataset.goal); if(!g)return;
+      const w=e.target.dataset.w,lid=e.target.dataset.lag;
+      state.indicatorLog[g.id]=state.indicatorLog[g.id]||{};
+      state.indicatorLog[g.id][w]=state.indicatorLog[g.id][w]||{};
+      const v=e.target.value===''?null:Number(e.target.value);
+      if(v===null||isNaN(v)) delete state.indicatorLog[g.id][w][lid];
+      else state.indicatorLog[g.id][w][lid]=v; save();
+    });
+    el.addEventListener('blur',()=>toast('✅ 已保存'));
+  });
+  // 今日感悟（按日期）
+  document.querySelectorAll('[data-journal]').forEach(el=>{
+    const key=el.dataset.journal;
+    el.addEventListener('input',e=>{
+      state.journal=state.journal||{};
+      const v=e.target.value;
+      if(v.trim()==='')delete state.journal[key]; else state.journal[key]=v;
+      save();
+    });
+    el.addEventListener('blur',()=>{ if(el.value.trim()!=='')toast('✅ 今日感悟已保存'); });
+  });
+  // 本周感悟（按周）
+  document.querySelectorAll('[data-weekjournal]').forEach(el=>{
+    const wk=el.dataset.weekjournal;
+    el.addEventListener('input',e=>{
+      state.weekJournal=state.weekJournal||{};
+      const v=e.target.value;
+      if(v.trim()==='')delete state.weekJournal[wk]; else state.weekJournal[wk]=v;
+      save();
+    });
+    el.addEventListener('blur',()=>{ if(el.value.trim()!=='')toast('✅ 本周感悟已保存'); });
+  });
+  bindLongPress();
+}
+/* 长按行 → 弹出编辑卡（按住 ~0.5s；短按仍走原动作：任务勾选 / 习惯打卡） */
+let _lpBound=false,_lpTimer=null,_lpTarget=null,_lpFired=false,_lpX=0,_lpY=0;
+function bindLongPress(){
+  if(_lpBound)return; _lpBound=true;
+  const clear=()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} _lpTarget=null; };
+  document.addEventListener('pointerdown',e=>{
+    const el=e.target.closest('.item[data-g][data-t], .habit-item[data-gid][data-hid], .ph-item[data-gid][data-hid]');
+    if(!el)return;
+    _lpTarget=el; _lpFired=false; _lpX=e.clientX; _lpY=e.clientY;
+    _lpTimer=setTimeout(()=>{
+      _lpFired=true;
+      const g=el.dataset.g||el.dataset.gid;
+      if(el.classList.contains('item')) openQuickEditTask(g, el.dataset.t);
+      else openQuickEditHabit(g, el.dataset.hid);
+    },500);
+  },{passive:true});
+  document.addEventListener('pointermove',e=>{
+    if(_lpTimer&&(Math.abs(e.clientX-_lpX)>10||Math.abs(e.clientY-_lpY)>10))clear();
+  },{passive:true});
+  document.addEventListener('pointerup',clear,{passive:true});
+  document.addEventListener('pointercancel',clear,{passive:true});
+  // 长按触发后的那次 click 要吞掉，避免误勾选 / 误打卡
+  document.addEventListener('click',e=>{
+    if(_lpFired){ _lpFired=false; e.preventDefault(); e.stopPropagation(); }
+  },true);
+}
+document.addEventListener('click',async(e)=>{
+  if(e.target.classList&&e.target.classList.contains('overlay')){closeModal();return;}
+  const t=e.target.closest('[data-act]'); if(!t)return;
+  const act=t.dataset.act;
+  try{
+    // 导航快捷
+    if(act==='go-projects'){view='projects';render();return;}
+
+    // 目标相关
+    if(act==='goal-add'){openGoalModal();}
+    else if(act==='help'){openHelp();}
+    else if(act==='goal-start'){
+      const title=document.getElementById('goal-title').value.trim();
+      const bg=document.getElementById('goal-bg').value.trim();
+      if(!title){toast('请先填写任务目标');return;}
+      if(state.goals.length>=5){toast('最多 5 个项目');closeModal();return;}
+      const g={id:uid(),title,background:bg,lagging:[],habits:[],tasks:[]};
+      state.goals.push(g);save();await runPlanAI(g);
+    }
+    else if(act==='goal-del'){
+      const id=t.dataset.goal,g=findGoal(id);
+      if(confirm(`删除「${g.title}」及其所有内容？`)){state.goals=state.goals.filter(x=>x.id!==id);save();render();}
+    }
+
+    // plan 编辑页操作
+    else if(act==='plan-lag-add'){const g=currentModalGoal;g.lagging=g.lagging||[];g.lagging.push({id:uid(),name:'',target:null,dir:'up'});save();openPlan(g);}
+    else if(act==='plan-lag-del'){const g=currentModalGoal;g.lagging=(g.lagging||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
+    else if(act==='plan-hab-add'){const g=currentModalGoal;g.habits=g.habits||[];const w=state.currentWeek;g.habits.push({id:uid(),title:'',weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:1,startDate:todayKey(),log:{}});save();openPlan(g);}
+    else if(act==='plan-hab-del'){const g=currentModalGoal;g.habits=(g.habits||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
+    else if(act==='plan-task-add'){const g=currentModalGoal;g.tasks=g.tasks||[];g.tasks.push({id:uid(),title:'',week:state.currentWeek,log:{},priority:'mid',due:null,mustDo:false});save();openPlan(g);}
+    else if(act==='plan-task-del'){const g=currentModalGoal;g.tasks=(g.tasks||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
+    else if(act==='plan-ai'){await runPlanAI(currentModalGoal);}
+    else if(act==='plan-save'){save();closeModal();render();toast('已保存');}
+
+    // 周导航（查看周，不影响真实本周）
+    else if(act==='week-prev'){state.viewWeek=Math.max(1,state.viewWeek-1);save();render();}
+    else if(act==='week-next'){state.viewWeek=Math.min(12,state.viewWeek+1);save();render();}
+    else if(act==='week-set'){state.viewWeek=+t.dataset.w;save();render();}
+    else if(act==='week-now'){state.viewWeek=state.currentWeek;save();render();}
+    // 12 周时间锚点
+    else if(act==='anchor-save'){
+      const wk=+document.getElementById('anc-week').value;
+      const dy=+document.getElementById('anc-day').value;
+      const dt=document.getElementById('anc-date').value||fmtDate(new Date());
+      state.anchor={startWeek:wk,startDay:dy,startDate:dt};
+      syncAnchor(); save(); render();
+      toast('✅ 已绑定真实日期，本周=第 '+state.currentWeek+' 周');
+    }
+
+    // 任务勾选
+    else if(act==='task-toggle'){
+      const g=findGoal(t.dataset.g),tk=g.tasks.find(x=>x.id===t.dataset.t);
+      tk.log[t.dataset.w]=!tk.log[t.dataset.w];save();render();
+    }
+
+    // 习惯每日打卡
+    else if(act==='habit-day'){
+      const hid=t.dataset.hid,w=+t.dataset.w,d=+t.dataset.d;
+      const cur=getHabitDays(hid,w)[d];
+      setHabitDay(hid,w,d,!cur); render(); // 局部重渲染更好但先简单处理
+    }
+
+    // 复盘页添加任务
+    else if(act==='review-add-task'){openReviewAddTask();}
+
+    // 复盘页：项目卡片 → 详情 / 返回
+    else if(act==='review-back'){currentReviewGid=null;render();}
+    // 卡片右上角「查看该周详情」按钮：效果同点柱子，直接进当前所看周的详情
+    else if(act==='rev-week-detail'){currentReviewGid=t.dataset.gid;render();}
+    // 点柱子 → 直接弹出该项目、该周的详情页（不再需要点卡片）
+    else if(act==='rev-bar'){
+      const wk=+t.dataset.wk, gid=t.dataset.gid;
+      state.viewWeek=wk; currentReviewGid=gid; save(); render();
+      const g=findGoal(gid);
+      toast('第 '+wk+' 周 · '+(g?g.title:'')+' 详情');
+    }
+    // 未完成任务「复制」到下一週（保留原任务，本周完成率不变）
+    else if(act==='task-move-next'){
+      const gid=t.dataset.gid,tid=t.dataset.tid,curW=+t.dataset.w;
+      const g=findGoal(gid);if(!g)return;
+      const tk=g.tasks.find(x=>x.id===tid);if(!tk)return;
+      const nextW=Math.min(12,curW+1);
+      const copy={id:uid(),title:tk.title,week:nextW,log:{},priority:tk.priority,due:tk.due,mustDo:tk.mustDo};
+      g.tasks.push(copy);save();render();toast(`已复制到第 ${nextW} 周（本周完成率不变）`);
+    }
+
+    // 项目背景折叠
+    else if(act==='toggle-pbg'){
+      const el=document.getElementById('pbg-'+t.dataset.gid);
+      if(el){el.classList.toggle('show');t.textContent=el.classList.contains('show')?'📌 收起背景 ▴':'📌 查看背景 ▾';}
+    }
+
+    // 项目卡片 → 详情；返回；删除
+    else if(act==='proj-open'){currentProjectId=t.dataset.gid;render();}
+    else if(act==='proj-back'){currentProjectId=null;render();}
+    else if(act==='proj-del'){
+      const id=t.dataset.gid,g=findGoal(id);
+      if(g&&confirm(`删除「${g.title}」及其所有内容？`)){state.goals=state.goals.filter(x=>x.id!==id);currentProjectId=null;save();render();}
+    }
+    // 详情页内添加
+    else if(act==='detail-add-task'){openTodayAddTask(t.dataset.gid);}
+    else if(act==='detail-add-habit'){openTodayAddHabit(t.dataset.gid);}
+    // 每周快速添加（指定项目+周，只填名称）
+    else if(act==='wk-add-task'){openQuickAddTask(t.dataset.gid,+t.dataset.wk);}
+    else if(act==='qat-save'){
+      const title=document.getElementById('qat-title').value.trim();
+      if(!title){toast('请填写任务名');return;}
+      const g=findGoal(quickAddGid);if(!g)return;
+      g.tasks=g.tasks||[];
+      g.tasks.push({id:uid(),title,week:quickAddWk,log:{},priority:'mid',due:null,mustDo:false});
+      save();closeModal();render();toast('已添加到第 '+quickAddWk+' 周');
+    }
+    // 详情页任务按周折叠
+    else if(act==='wk-toggle'){
+      const body=document.getElementById('wk-'+t.dataset.gid+'-'+t.dataset.wk);
+      const arrow=t.querySelector('.wk-arrow');
+      if(body){body.classList.toggle('show');if(arrow)arrow.textContent=body.classList.contains('show')?'▾':'▸';}
+    }
+
+    // 今天页直接添加
+    else if(act==='today-add-task'){openTodayAddTask();}
+    else if(act==='today-add-habit'){openTodayAddHabit();}
+    else if(act==='today-task-save'){
+      const gid=document.getElementById('tat-goal').value;
+      const title=document.getElementById('tat-title').value.trim();
+      const wv=document.getElementById('tat-week').value;
+      const pr=document.getElementById('tat-priority').value;
+      const due=document.getElementById('tat-due').value||null;
+      if(!gid||!title){toast('请填写完整');return;}
+      const g=findGoal(gid);if(!g)return;
+      g.tasks=g.tasks||[];
+      g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:pr,due:due,mustDo:false});
+      save();closeModal();render();toast('已添加');
+    }
+    else if(act==='today-habit-save'){
+      const gid=document.getElementById('tah-goal').value;
+      const title=document.getElementById('tah-title').value.trim();
+      const wv=+document.getElementById('tah-week').value||state.currentWeek;
+      const pw=+document.getElementById('tah-pw').value||1;
+      if(!gid||!title){toast('请填写完整');return;}
+      const g=findGoal(gid);if(!g)return;
+      g.habits=g.habits||[];
+      const w=Math.max(1,Math.min(12,wv));
+      g.habits.push({id:uid(),title,weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,pw)),startDate:todayKey(),log:{}});
+      save();closeModal();render();toast('已添加');
+    }
+    else if(act==='personal-habit-add'){ openPersonalHabitAdd(); }
+    else if(act==='personal-habit-save'){
+      const title=document.getElementById('ph-title').value.trim();
+      const wv=+document.getElementById('ph-week').value||state.currentWeek;
+      const pw=+document.getElementById('ph-pw').value||1;
+      const sd=document.getElementById('ph-start').value||todayKey();
+      if(!title){toast('请填写习惯名称');return;}
+      ensurePersonal();
+      const g=findGoal(PERSONAL_ID); if(!g)return;
+      g.habits=g.habits||[];
+      const w=Math.max(1,Math.min(12,wv));
+      g.habits.push({id:uid(),title,weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,pw)),startDate:sd,log:{}});
+      save();closeModal();render();toast('已加入个人习惯 🔆');
+    }
+
+    // 设置
+    else if(act==='provider-change'){
+      const prov=t.value,p=PROVIDERS[prov];
+      document.getElementById('set-model').value='';
+      document.getElementById('set-model').placeholder='如 '+p.model;
+      document.getElementById('set-base').value='';
+      document.getElementById('set-base').placeholder=p.base;
+    }
+    else if(act==='set-save'){
+      state.settings.provider=document.getElementById('set-provider').value;
+      state.settings.apiKey=document.getElementById('set-key').value.trim();
+      state.settings.model=document.getElementById('set-model').value.trim();
+      state.settings.baseUrl=document.getElementById('set-base').value.trim();
+      save();toast('已保存');
+    }
+    else if(act==='set-test'){
+      const old=t.innerHTML;t.disabled=true;t.innerHTML='<span class="spinner"></span>测试中';
+      try{const r=await aiChat('你是助手，只回复一句中文问候，不超过15字。','你好');toast('连接成功：'+r.slice(0,20));}
+      catch(err){toast(err.message==='NO_KEY'?'请先填 API Key':'连接失败：'+err.message);}
+      t.disabled=false;t.innerHTML=old;
+    }
+    else if(act==='export'){exportJSON();}
+    else if(act==='import'){importJSON();}
+    else if(act==='reset'){if(confirm('确定清空？不可恢复')){state=defaultState();save();render();toast('已清空');}}
+
+    // 长按编辑：任务保存 / 删除
+    else if(act==='qet-save'){
+      const gid=t.dataset.gid,tid=t.dataset.tid;
+      const g=findGoal(gid);if(!g)return;
+      const tk=g.tasks.find(x=>x.id===tid);if(!tk)return;
+      const title=document.getElementById('qet-title').value.trim();
+      if(!title){toast('请填写任务名');return;}
+      tk.title=title;
+      tk.priority=document.getElementById('qet-priority').value;
+      tk.due=document.getElementById('qet-due').value||null;
+      tk.week=+document.getElementById('qet-week').value;
+      save();closeModal();render();toast('已保存');
+    }
+    else if(act==='qet-del'){
+      const gid=t.dataset.gid,tid=t.dataset.tid;
+      const g=findGoal(gid);if(!g)return;
+      g.tasks=(g.tasks||[]).filter(x=>x.id!==tid);
+      save();closeModal();render();toast('已删除');
+    }
+    // 长按编辑：习惯保存 / 删除
+    else if(act==='qeh-save'){
+      const gid=t.dataset.gid,hid=t.dataset.hid;
+      const g=findGoal(gid);if(!g)return;
+      const hb=g.habits.find(x=>x.id===hid);if(!hb)return;
+      const title=document.getElementById('qeh-title').value.trim();
+      if(!title){toast('请填写习惯名');return;}
+      hb.title=title;
+      const w=Math.max(1,Math.min(12,+document.getElementById('qeh-week').value));
+      hb.weeks=Array.from({length:13-w},(_,i)=>w+i);
+      hb.perWeek=Math.max(1,Math.min(7,+document.getElementById('qeh-pw').value));
+      save();closeModal();render();toast('已保存');
+    }
+    else if(act==='qeh-del'){
+      const gid=t.dataset.gid,hid=t.dataset.hid;
+      const g=findGoal(gid);if(!g)return;
+      g.habits=(g.habits||[]).filter(x=>x.id!==hid);
+      save();closeModal();render();toast('已删除');
+    }
+    // modal
+    else if(act==='modal-close'){closeModal();}
+  }catch(err){toast('出错：'+err.message);console.error(err);}
+});
+
+/* ============================ AI + 录入 + 编辑 ============================ */
+let currentModalGoal=null,planLoading=false;
+
+function openGoalModal(){
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>🎯 新建项目</h2><div class="sub">你脑子里只有一个想达成的任务，写下来让 AI 帮你拆。</div>
+    <label class="fld">① 我要达成一个什么样的任务目标</label>
+    <input id="goal-title" placeholder="如：3 个月内把体重减到 70kg"/>
+    <label class="fld">② 我的背景是什么（现状 / 约束 / 资源 / 为什么重要）</label>
+    <textarea id="goal-bg" placeholder="如：目前 82kg，久坐办公，每周能运动 3 次"></textarea>
+    <button class="btn primary full" data-act="goal-start" style="margin-top:12px">🤖 AI 分解任务</button>
+    <button class="btn ghost full" data-act="modal-close" style="margin-top:6px">稍后再说</button>
+  </div></div>`);
+}
+
+function openHelp(){
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>📖 使用指南</h2><div class="sub">四步上手。</div>
+    <div class="help-q">① 三个页面分别做什么？</div>
+    <p class="help-a"><strong>今天</strong>：每天打开只看「今天还有什么没做」，快速打卡。<br><strong>项目</strong>：管理你的所有目标，编辑滞后指标/习惯/任务。<br><strong>复盘</strong>：每周末回顾——填滞后指标实际值看结果达成率，看习惯和任务完成了多少。</p>
+    <div class="help-q">② 滞后 vs 引领指标？</div>
+    <p class="help-a"><strong>滞后</strong>= 结果（如收入、体脂率），每周末在「复盘」页填实际值。<br><strong>引领</strong>= 你的行动（习惯+任务）。本工具里不需要单独填引领指标——你每天打卡的习惯和勾掉的任务，就是引领指标的执行度。「复盘」页的两个环就是它。</p>
+    <div class="help-q">③ 习惯怎么打卡？</div>
+    <p class="help-a">在「今天」页看到每周一到日的格子，完成一次点一下打 ✓。旁边显示完成百分比。</p>
+    <div class="help-q">④ 怎么新建项目？</div>
+    <p class="help-a">在「项目」页点「+ 新建项目」，填目标和背景后直接点「🤖 AI 分解任务」。AI 会一次性给出滞后指标、习惯、任务的建议，你都能改、删、自己加。</p>
+    <div class="help-tip">💡 不会填？直接让 AI 先给一版，再改成自己的就行。</div>
+    <div class="row" style="margin-top:12px"><button class="btn primary full" data-act="modal-close">开始使用</button></div>
+  </div></div>`);
+}
+
+/* AI merge helpers */
+function toLag(v){return Array.isArray(v)?v.filter(x=>x&&(x.name||x.text)).map(x=>({id:uid(),name:String(x.name||x.text||''),target:(x.target==null||x.target==='')?null:Number(x.target),dir:(x.dir==='down'?'down':'up')})):[];}
+function mergeLag(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.name||'').trim().toLowerCase()));toLag(ai).forEach(it=>{const k=String(it.name||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
+function toHabit(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(1,Math.min(12,+(x.suggestedWeek||1)||1));return{id:uid(),title:String(x.title||x.text||''),weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,+(x.perWeek||1)||1)),startDate:null,log:{}};}):[];}
+function mergeHabits(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.title||'').trim().toLowerCase()));toHabit(ai).forEach(it=>{const k=String(it.title||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
+function toTask(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(1,Math.min(12,+(x.suggestedWeek||1)||1));return{id:uid(),title:String(x.title||x.text||''),week:w,log:{}};}):[];}
+function mergeTasks(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.title||'').trim().toLowerCase()));toTask(ai).forEach(it=>{const k=String(it.title||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
+
+async function runPlanAI(g){
+  planLoading=true;openPlan(g);
+  try{
+    const text=await aiChat(SYS_PLAN,'目标：'+g.title+'\n背景：'+(g.background||'（无）'));
+    const d=parseJSON(text);if(!d||!Array.isArray(d.habits)||!Array.isArray(d.tasks))throw new Error('格式异常');
+    g.lagging=mergeLag(g.lagging,d.lagging);
+    g.habits=mergeHabits(g.habits,d.habits);
+    g.tasks=mergeTasks(g.tasks,d.tasks);
+    save();toast('AI 已补充（可增删/修改）');
+  }catch(err){toast(err.message==='NO_KEY'?'请先在「设置」填 API Key':'AI 失败：'+err.message+'（可手动填写）');}
+  finally{planLoading=false;openPlan(g);}
+}
+
+function weekOpts(sel){return Array.from({length:12},(_,i)=>{const n=i+1;return`<option${n===sel?' selected':''}>${n}</option>`;}).join('');}
+
+/* 统一分解/编辑页 */
+function openPlan(g){
+  currentModalGoal=g;
+  const lagRows=(g.lagging||[]).map(it=>`<div class="plan-row">
+    <input class="plan-in" data-lk="name" data-iid="${it.id}" placeholder="测量维度，如：月销售收入（万）" value="${esc(it.name||'')}"/>
+    <input class="plan-in plan-target" data-lk="target" data-iid="${it.id}" type="number" placeholder="目标值" value="${it.target!=null?esc(it.target):''}"/>
+    <div class="plan-line">
+      <select class="plan-sel" data-lk="dir" data-iid="${it.id}"><option value="up"${it.dir!=='down'?' selected':''}>↑越高越好</option><option value="down"${it.dir==='down'?' selected':''}>↓越低越好</option></select>
+      <button class="del sm" data-act="plan-lag-del" data-iid="${it.id}">✕</button>
+    </div></div>`).join('')||'<p class="muted" style="padding:4px 0">还没有滞后指标</p>';
+
+  const habRows=(g.habits||[]).map(hb=>{const sw=(Array.isArray(hb.weeks)&&hb.weeks.length)?hb.weeks[0]:1;return`<div class="plan-row">
+    <input class="plan-in" data-hk="title" data-iid="${hb.id}" placeholder="习惯名称" value="${esc(hb.title||'')}"/>
+    <div class="plan-line"><span class="lbl">起始周</span>
+      <select class="plan-sel" data-hk="week" data-iid="${hb.id}">${weekOpts(sw)}</select>
+      <span class="lbl">每周</span>
+      <select class="plan-sel" data-hk="perWeek" data-iid="${hb.id}">${[1,2,3,4,5,6,7].map(n=>`<option${n===(hb.perWeek||1)?' selected':''}>${n}</option>`).join('')}</select><span class="lbl">次</span>
+      <span class="lbl">始于</span><input class="plan-sel" style="min-width:120px" type="date" data-hk="startDate" data-iid="${hb.id}" value="${hb.startDate||''}"/>
+      <button class="del sm" data-act="plan-hab-del" data-iid="${hb.id}">✕</button>
+    </div></div>`;}).join('')||'<p class="muted" style="padding:4px 0">还没有习惯</p>';
+
+  const taskRows=(g.tasks||[]).map(tk=>`<div class="plan-row">
+    <input class="plan-in" data-tk="title" data-iid="${tk.id}" placeholder="任务名称" value="${esc(tk.title||'')}"/>
+    <div class="plan-line"><span class="lbl">安排周次</span>
+      <select class="plan-sel" data-tk="week" data-iid="${tk.id}">${weekOpts(tk.week||1)}</select>
+      <button class="del sm" data-act="plan-task-del" data-iid="${tk.id}">✕</button>
+    </div>
+    <div class="plan-line"><span class="lbl">优先级</span>
+      <select class="plan-sel" data-tk="priority" data-iid="${tk.id}">${['low','mid','high'].map(p=>`<option value="${p}"${ (tk.priority||'mid')===p?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
+      <span class="lbl">截止</span>
+      <input class="plan-sel" style="min-width:128px" type="date" data-tk="due" data-iid="${tk.id}" value="${tk.due||''}"/>
+    </div></div>`).join('')||'<p class="muted" style="padding:4px 0">还没有任务</p>';
+
+  const spin=planLoading?`<div style="display:flex;align-items:center;gap:7px;justify-content:center;color:var(--muted);font-size:12.5px;padding:14px 0;margin-top:6px"><span class="spinner"></span>AI 正在分解…</div>`:'';
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>🤖 分解任务目标</h2><div class="sub">「${esc(g.title)}」— 可直接改、删、加</div>
+    ${g.background?`<div class="plan-bg">📌 ${esc(g.background)}</div>`:''}
+    <div class="sec-title">📈 滞后指标（结果）</div><div id="plan-lag">${lagRows}</div><button class="btn sm" data-act="plan-lag-add" style="margin:5px 0 3px">+ 添加滞后指标</button>
+    <div class="sec-title">🔁 习惯 Habits</div><div id="plan-hab">${habRows}</div><button class="btn sm" data-act="plan-hab-add" style="margin:5px 0 3px">+ 添加习惯</button>
+    <div class="sec-title">✅ 任务 Tasks</div><div id="plan-task">${taskRows}</div><button class="btn sm" data-act="plan-task-add" style="margin:5px 0 3px">+ 添加任务</button>
+    ${spin}
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">关闭</button>
+      <button class="btn primary" data-act="plan-ai">🤖 用 AI 补充</button>
+      <button class="btn primary full" data-act="plan-save">保存</button>
+    </div></div></div>`);
+  bindPlan();
+}
+function bindPlan(){
+  const root=document.querySelector('#modal .sheet');if(!root)return;
+  root.__g=currentModalGoal;
+  const handler=e=>{const el=e.target;if(el&&(el.dataset.lk||el.dataset.hk||el.dataset.tk))planWrite(root.__g,el);};
+  root.addEventListener('input',handler);root.addEventListener('change',handler);
+}
+function planWrite(g,el){
+  const k=el.dataset.lk||el.dataset.hk||el.dataset.tk;if(!k||!g)return;
+  const id=el.dataset.iid;
+  if(el.dataset.lk){const it=(g.lagging||[]).find(x=>x.id===id);if(!it)return;if(k==='name')it.name=el.value;else if(k==='target')it.target=el.value===''?null:Number(el.value);else if(k==='dir')it.dir=el.value;}
+  else if(el.dataset.hk){const hb=(g.habits||[]).find(x=>x.id===id);if(!hb)return;if(k==='title')hb.title=el.value;else if(k==='week'){const w=+el.value;hb.weeks=Array.from({length:13-w},(_,i)=>w+i);}else if(k==='perWeek')hb.perWeek=+el.value;else if(k==='startDate')hb.startDate=el.value||null;}
+  else if(el.dataset.tk){const tk=(g.tasks||[]).find(x=>x.id===id);if(!tk)return;if(k==='title')tk.title=el.value;else if(k==='week')tk.week=+el.value;else if(k==='priority')tk.priority=el.value;else if(k==='due')tk.due=el.value||null;}
+  save();
+}
+
+/* 复盘页内添加任务 */
+var reviewAddGoalId=null;
+function openReviewAddTask(){
+  if(state.goals.length===0){toast('请先添加项目');return;}
+  if(state.goals.length===1){reviewAddGoalId=state.goals[0].id;}else reviewAddGoalId=null;
+  let opts=state.goals.map(g=>`<option value="${g.id}">${esc(g.title)}</option>`).join('');
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>+ 添加任务</h2>
+    <label class="fld">所属项目</label><select id="rag-goal">${opts}</select>
+    <label class="fld">任务名称</label><input id="rag-title" placeholder="如：发布第一篇小红书笔记"/>
+    <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
+    <select id="rag-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn primary full" data-act="review-task-save">添加</button>
+    </div></div></div>`);
+}
+function goalOpts(){const ps=state.goals.filter(g=>g.id===PERSONAL_ID);const rs=state.goals.filter(g=>g.id!==PERSONAL_ID);return [...ps,...rs].map(g=>`<option value="${g.id}">${g.id===PERSONAL_ID?'🔆 ':''}${esc(g.title)}</option>`).join('');}
+/* 今天页内 / 项目详情内 直接添加（任务 / 习惯） */
+function openTodayAddTask(preGid){
+  if(state.goals.length===0){toast('请先添加项目');return;}
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>＋ 添加任务</h2><div class="sub">选择所属项目，默认加到当前第 ${state.currentWeek} 周</div>
+    <label class="fld">所属项目</label><select id="tat-goal">${goalOpts()}</select>
+    <label class="fld">任务名称</label><input id="tat-title" placeholder="如：完成第 3 章草稿"/>
+    <label class="fld">优先级</label><select id="tat-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
+    <label class="fld">截止日期（可选）</label><input id="tat-due" type="date"/>
+    <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
+    <select id="tat-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn primary full" data-act="today-task-save">添加</button>
+    </div></div></div>`);
+  if(preGid){const s=document.getElementById('tat-goal');if(s)s.value=preGid;}
+}
+function openTodayAddHabit(preGid){
+  if(state.goals.length===0){toast('请先添加项目');return;}
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>＋ 添加习惯</h2><div class="sub">选择所属项目，默认从第 ${state.currentWeek} 周开始</div>
+    <label class="fld">所属项目</label><select id="tah-goal">${goalOpts()}</select>
+    <label class="fld">习惯名称</label><input id="tah-title" placeholder="如：每天喝水 2L"/>
+    <label class="fld">起始周（默认当前第 ${state.currentWeek} 周）</label>
+    <select id="tah-week">${weekOpts(state.currentWeek)}</select>
+    <label class="fld">每周几次</label>
+    <select id="tah-pw">${[1,2,3,4,5,6,7].map(n=>`<option${n===1?' selected':''}>${n}</option>`).join('')}</select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn primary full" data-act="today-habit-save">添加</button>
+    </div></div></div>`);
+  if(preGid){const s=document.getElementById('tah-goal');if(s)s.value=preGid;}
+}
+function openPersonalHabitAdd(){
+  ensurePersonal();
+  if(!findGoal(PERSONAL_ID)){toast('个人习惯容器未就绪');return;}
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>🔆 新建个人习惯</h2><div class="sub">添加到「个人习惯」，不关联任何项目</div>
+    <label class="fld">习惯名称</label><input id="ph-title" placeholder="如：每天喝水 2L / 每周跑步 3 次"/>
+    <label class="fld">起始周（默认当前第 ${state.currentWeek} 周）</label>
+    <select id="ph-week">${weekOpts(state.currentWeek)}</select>
+    <label class="fld">每周几次</label>
+    <select id="ph-pw">${[1,2,3,4,5,6,7].map(n=>`<option${n===1?' selected':''}>${n}</option>`).join('')}</select>
+    <label class="fld">开始日期（默认今天）</label>
+    <input id="ph-start" type="date" value="${todayKey()}"/>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn viole full" data-act="personal-habit-save">添加</button>
+    </div></div></div>`);
+}
+/* 快速添加：指定项目 + 指定周，只需填名称 */
+var quickAddGid=null,quickAddWk=null;
+function openQuickAddTask(gid,wk){
+  quickAddGid=gid;quickAddWk=wk;
+  const goal=findGoal(gid);
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>＋ 第 ${wk} 周添加任务</h2><div class="sub">${esc(goal?goal.title:'')} · 只需填任务名</div>
+    <label class="fld">任务名称</label><input id="qat-title" placeholder="如：完成第 3 章草稿" autofocus/>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn primary full" data-act="qat-save">添加</button>
+    </div></div></div>`);
+}
+
+/* 长按行 → 编辑任务 / 习惯（底部卡，可改可删） */
+function openQuickEditTask(gid,tid){
+  const g=findGoal(gid); if(!g)return;
+  const tk=g.tasks.find(x=>x.id===tid); if(!tk)return;
+  const wv=tk.week||state.currentWeek;
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>✏️ 编辑任务</h2>
+    <label class="fld">任务名称</label><input id="qet-title" value="${esc(tk.title||'')}"/>
+    <label class="fld">优先级</label><select id="qet-priority">${['low','mid','high'].map(p=>`<option value="${p}"${(tk.priority||'mid')===p?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
+    <label class="fld">截止日期（可选）</label><input id="qet-due" type="date" value="${tk.due||''}"/>
+    <label class="fld">安排周次</label><select id="qet-week">${weekOpts(wv)}</select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn danger" data-act="qet-del" data-gid="${gid}" data-tid="${tid}">删除</button>
+      <button class="btn primary full" data-act="qet-save" data-gid="${gid}" data-tid="${tid}">保存</button>
+    </div></div></div>`);
+}
+function openQuickEditHabit(gid,hid){
+  const g=findGoal(gid); if(!g)return;
+  const hb=g.habits.find(x=>x.id===hid); if(!hb)return;
+  const sw=(Array.isArray(hb.weeks)&&hb.weeks.length)?hb.weeks[0]:1;
+  openModal(`<div class="overlay"><div class="sheet">
+    <h2>✏️ 编辑习惯</h2>
+    <label class="fld">习惯名称</label><input id="qeh-title" value="${esc(hb.title||'')}"/>
+    <label class="fld">起始周</label><select id="qeh-week">${weekOpts(sw)}</select>
+    <label class="fld">每周几次</label><select id="qeh-pw">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}"${(hb.perWeek||1)===n?' selected':''}>${n}</option>`).join('')}</select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" data-act="modal-close">取消</button>
+      <button class="btn danger" data-act="qeh-del" data-gid="${gid}" data-hid="${hid}">删除</button>
+      <button class="btn primary full" data-act="qeh-save" data-gid="${gid}" data-hid="${hid}">保存</button>
+    </div></div></div>`);
+}
+// 在 click handler 里补一个分支
+document.addEventListener('click',async(e)=>{
+  if(e.target.classList&&e.target.classList.contains('overlay')){closeModal();return;}
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const act=t.dataset.act;
+  if(act==='review-task-save'){
+    const gid=document.getElementById('rag-goal').value;
+    const title=document.getElementById('rag-title').value.trim();
+    const wv=document.getElementById('rag-week').value;
+    if(!gid||!title){toast('请填写完整');return;}
+    const g=findGoal(gid);if(!g)return;
+    g.tasks=g.tasks||[];
+    g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:'mid',due:null,mustDo:false});
+    save();closeModal();render();toast('已添加');
+  }
+},{capture:true}); // 用 capture 确保能拦截到动态生成的按钮
+
+/* ============================ 弹窗 / 导入导出 ============================ */
+function openModal(html){document.getElementById('modal').innerHTML=html;}
+function closeModal(){document.getElementById('modal').innerHTML='';}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='12week-backup.json';a.click();toast('已导出');
+}
+function importJSON(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.goals)throw 0;state=d;save();render();toast('导入成功');}catch(e){toast('文件无效');}};
+    r.readAsText(f);};inp.click();
+}
+
+/* ============================ 任务拖拽（跨周移动） ============================ */
+let _dragTaskId=null,_dragGid=null;
+function initDrag(){
+  // 桌面端 HTML5 DnD
+  document.addEventListener('dragstart',e=>{
+    const item=e.target.closest('[data-drag-task]');
+    if(!item)return;_dragTaskId=item.dataset.dragTask;_dragGid=item.dataset.dragGid;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',_dragTaskId);
+    setTimeout(()=>item.style.display='none',0);
+  });
+  document.addEventListener('dragend',e=>{
+    document.querySelectorAll('.item.dragging').forEach(el=>{el.classList.remove('dragging');el.style.display='';});
+    document.querySelectorAll('.drop-over').forEach(el=>el.classList.remove('drop-over'));
+    _dragTaskId=null;_dragGid=null;
+  });
+  document.addEventListener('dragover',e=>{
+    if(!_dragTaskId)return;e.preventDefault();e.dataTransfer.dropEffect='move';
+    const drop=e.target.closest('[data-drop]');
+    const grp=e.target.closest('[data-wk-group]');
+    document.querySelectorAll('.drop-over').forEach(el=>el.classList.remove('drop-over'));
+    if(drop)drop.classList.add('drop-over');
+    else if(grp)grp.classList.add('drop-over');
+  });
+  document.addEventListener('drop',e=>{
+    e.preventDefault();if(!_dragTaskId)return;
+    const drop=e.target.closest('[data-drop]');
+    const grp=e.target.closest('[data-wk-group]');
+    document.querySelectorAll('.drop-over').forEach(el=>el.classList.remove('drop-over'));
+    if(drop&&_dragGid){
+      setMustDo(_dragGid,_dragTaskId, drop.dataset.drop==='mustdo');
+    } else if(grp){
+      const parts=grp.dataset.wkGroup.split('-');
+      const targetGid=parts[0],targetWk=+parts[1];
+      if(targetGid!==_dragGid||!targetWk)return;
+      moveTaskToWeek(_dragGid,_dragTaskId,targetWk);
+    }
+  });
+  // 移动端触摸拖拽
+  let _touchEl=null,_touchGhost=null,_touchStartX=0,_touchStartY=0,_touchMoved=false;
+  document.addEventListener('touchstart',e=>{
+    const item=e.target.closest('[data-drag-task]');
+    if(!item)return;_touchEl=item;_touchMoved=false;const t=e.touches[0];_touchStartX=t.clientX;_touchStartY=t.clientY;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!_touchEl||!_touchEl.dataset.dragTask)return;
+    const t=e.touches[0];
+    const dx=Math.abs(t.clientX-_touchStartX),dy=Math.abs(t.clientY-_touchStartY);
+    if(dx>10||dy>10)_touchMoved=true;
+    if(!_touchMoved)return;
+    e.preventDefault();
+    // 创建 ghost
+    if(!_touchGhost){
+      _dragTaskId=_touchEl.dataset.dragTask;_dragGid=_touchEl.dataset.dragGid;
+      _touchGhost=_touchEl.cloneNode(true);_touchGhost.style.position='fixed';_touchGhost.style.zIndex='9999';
+      _touchGhost.style.width=_touchEl.offsetWidth+'px';_touchGhost.style.opacity='.85';
+      _touchGhost.style.pointerEvents='none';_touchGhost.style.boxShadow='0 8px 24px rgba(30,41,59,.2)';
+      _touchGhost.style.borderRadius='12px';_touchGhost.style.background='#fff';_touchGhost.style.padding='10px';
+      document.body.appendChild(_touchGhost);_touchEl.style.opacity='.3';
+    }
+    _touchGhost.style.left=(t.clientX-_touchEl.offsetWidth/2)+'px';_touchGhost.style.top=(t.clientY-20)+'px';
+    // 高亮目标（今天必做 / 本周待办 / 项目周组）
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    const drop=el?el.closest('[data-drop]'):null;
+    const grp=el?el.closest('[data-wk-group]'):null;
+    document.querySelectorAll('.drop-over').forEach(x=>x.classList.remove('drop-over'));
+    if(drop)drop.classList.add('drop-over');
+    else if(grp)grp.classList.add('drop-over');
+  },{passive:false});
+  document.addEventListener('touchend',()=>{
+    if(_touchGhost){
+      const drop=document.querySelector('.drop-over');
+      if(drop&&_dragTaskId&&_dragGid){
+        if(drop.dataset.drop) setMustDo(_dragGid,_dragTaskId, drop.dataset.drop==='mustdo');
+        else if(drop.dataset.wkGroup){
+          const parts=drop.dataset.wkGroup.split('-');
+          const targetGid=parts[0],targetWk=+parts[1];
+          if(targetGid===_dragGid)moveTaskToWeek(_dragGid,_dragTaskId,targetWk);
+        }
+      }
+      document.querySelectorAll('.drop-over').forEach(x=>x.classList.remove('drop-over'));
+      _touchGhost.remove();_touchGhost=null;
+      if(_touchEl)_touchEl.style.opacity='';
+    }
+    _touchEl=null;_touchMoved=false;_dragTaskId=null;_dragGid=null;
+  });
+}
+function moveTaskToWeek(gid,tid,newWeek){
+  const g=findGoal(gid);if(!g)return;
+  const tk=g.tasks.find(x=>x.id===tid);if(!tk)return;
+  if(tk.week===newWeek){toast('任务已在第 '+newWeek+' 周');return;}
+  const old=tk.week;tk.week=newWeek;save();render();toast(`已从第 ${old} 周移到第 ${newWeek} 周`);
+}
+
+/* ============================ 启动 ============================ */
+document.getElementById('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-view]');if(!b)return;view=b.dataset.view;
+  if(view==='projects')currentProjectId=null;
+  if(view==='review'){ state.viewWeek=state.currentWeek; currentReviewGid=null; }
+  render();
+});
+render();
+initDrag();
+if(!state.settings.apiKey) toast('提示：先在「设置」填写 AI 的 API Key');
+</script>
+</body>
+</html>
