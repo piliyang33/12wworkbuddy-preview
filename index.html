@@ -121,6 +121,10 @@
   [data-drop="rest"]{min-height:8px;}
   .md-title{font-size:12.5px; font-weight:800; color:#c2410c; margin-bottom:5px;}
   .md-rest-title{font-size:12px; font-weight:800; color:var(--muted); margin:2px 0 5px;}
+  /* 拖拽手柄（只有它才是 drop 目标，避免误触） */
+  .drag-grip{flex:0 0 auto;width:22px;display:flex;align-items:center;justify-content:center;padding:6px 2px;border-radius:6px;background:rgba(99,102,241,.07);color:var(--muted);cursor:grab;font-size:9px;line-height:3px;letter-spacing:1.5px;-webkit-user-select:none;user-select:none;margin-left:auto;}
+  .drag-grip::before{content:'⋮⋮';}
+  .drag-grip:active{background:rgba(99,102,241,.18);}
   .pdot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; flex:0 0 auto;}
   .due-badge{font-size:10px; color:var(--muted); margin-left:6px;}
   .due-badge.urgent{color:var(--rose); font-weight:800;}
@@ -541,14 +545,13 @@ function viewToday(){
   h+=`<div class="mini-cap">本周任务完成度 ${sc.tasksPct!=null?sc.tasksPct+'%':'—'} · ${sc.tasksDone}/${sc.tasksDue}</div>`;
   if(tasks.length===0) h+=`<p class="empty">今天没有待办任务。</p>`;
   else{
-    // 今天必做（始终渲染为拖拽目标，即使为空也能拖入）
-    h+=`<div class="mustdo-zone" data-drop="mustdo"><div class="md-title">🔴 今天必做 (${mustDo.length})</div>`;
+    // 今天必做（手柄在右侧，只有手柄是 drop 目标）
+    h+=`<div class="mustdo-zone"><div class="row between" style="margin-bottom:4px"><div class="md-title">🔴 今天必做 (${mustDo.length})</div><div class="drag-grip" data-drop="mustdo"></div></div>`;
     mustDo.forEach(x=>{ h+=todayTaskItem(x,w); });
-    if(mustDo.length===0) h+=`<div class="md-empty">把下面「本周待办」里的任务拖到这里</div>`;
+    if(mustDo.length===0) h+=`<div class="md-empty">把下面「本周待办」里的任务拖到手柄上</div>`;
     h+=`</div>`;
-    // 本周待办（拖回这里可取消「今天必做」）
-    h+=`<div class="md-rest-title">📋 本周待办 (${rest.length})</div>`;
-    h+=`<div data-drop="rest">`;
+    // 本周待办（拖回手柄可取消「今天必做」）
+    h+=`<div><div class="row between" style="margin-bottom:4px"><div class="md-rest-title">📋 本周待办 (${rest.length})</div><div class="drag-grip" data-drop="rest"></div></div>`;
     if(rest.length>0){
       rest.forEach(x=>{ h+=todayTaskItem(x,w); });
     } else if(mustDo.length>0){
