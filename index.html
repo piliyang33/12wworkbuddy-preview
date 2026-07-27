@@ -122,7 +122,7 @@
   .md-title{font-size:12.5px; font-weight:800; color:#c2410c; margin-bottom:5px;}
   .md-rest-title{font-size:12px; font-weight:800; color:var(--muted); margin:2px 0 5px;}
   /* 拖拽手柄：只在每条任务最左边，必须抓它才能拖动，避免下滑误触 */
-  .grip{flex:0 0 auto;width:20px;align-self:stretch;min-height:22px;display:flex;align-items:center;justify-content:center;margin-right:0;color:var(--muted);cursor:grab;font-size:12px;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
+  .grip{flex:0 0 auto;width:20px;align-self:stretch;min-height:22px;display:flex;align-items:center;justify-content:center;margin-right:-6px;color:var(--muted);cursor:grab;font-size:12px;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
   .grip::before{content:'⋮⋮';letter-spacing:1px;}
   .grip:active{color:var(--indigo);}
   .pdot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; flex:0 0 auto;}
@@ -563,8 +563,8 @@ function viewToday(){
       if(undoneTasks.length===0) h+=`<p class="muted" style="padding:2px 0 4px;margin:0">🎉 今天任务都完成了！</p>`;
       h+=`<div class="done-list">`;
       doneTasks.forEach(x=>{
-        h+=`<div class="item done" data-act="task-toggle" data-g="${x.g.id}" data-t="${x.t.id}" data-w="${w}">
-          <div class="chk">✓</div><div class="it-title">${esc(x.t.title)}</div><span class="itag">${esc(trunc(x.g.title,6))}</span></div>`;
+        h+=`<div class="item done" data-g="${x.g.id}" data-t="${x.t.id}" data-w="${w}">
+          <div class="chk" data-act="task-toggle" data-g="${x.g.id}" data-t="${x.t.id}" data-w="${w}">✓</div><div class="it-title" data-act="task-edit" data-g="${x.g.id}" data-t="${x.t.id}" data-w="${w}">${esc(x.t.title)}</div><span class="itag">${esc(trunc(x.g.title,6))}</span></div>`;
       });
       h+=`</div>`;
     }
@@ -632,10 +632,10 @@ function todayTaskItem(x,w){
   const dueTxt=t.due?`📅 ${t.due.slice(5)}`:'';
   const gripTitle = t.mustDo ? '拖回「本周待办」' : '拖动我到「今天必做」';
   const grip=`<div class="grip" draggable="true" title="${gripTitle}"></div>`;
-  return `<div class="item" data-drag-task="${t.id}" data-drag-gid="${x.g.id}" data-act="task-toggle" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}" style="${urg?'border-left:3px solid var(--rose);':''}">
+  return `<div class="item" data-drag-task="${t.id}" data-drag-gid="${x.g.id}" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}" style="${urg?'border-left:3px solid var(--rose);':''}">
     ${grip}
-    <div class="chk"></div>
-    <div class="it-title"><span class="pdot" style="background:${prColor}"></span>${esc(t.title)} ${urg?`<span class="due-badge urgent">🔴 今天到期</span>`:(dueTxt?`<span class="due-badge">${dueTxt}</span>`:'')}</div>
+    <div class="chk" data-act="task-toggle" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}"></div>
+    <div class="it-title" data-act="task-edit" data-g="${x.g.id}" data-t="${t.id}" data-w="${w}"><span class="pdot" style="background:${prColor}"></span>${esc(t.title)} ${urg?`<span class="due-badge urgent">🔴 今天到期</span>`:(dueTxt?`<span class="due-badge">${dueTxt}</span>`:'')}</div>
     <span class="itag">${esc(trunc(x.g.title,6))}</span>
   </div>`;
 }
@@ -762,7 +762,7 @@ function viewProjectDetail(gid){
       anyTask=true;
       wkTasks.forEach(t=>{
         const done=!!(t.log&&t.log[wi]);
-        h+=`<div class="item${done?' done':''}" draggable="true" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="chk">${done?'✓':''}</div><div class="it-title">${esc(t.title)}</div></div>`;
+        h+=`<div class="item${done?' done':''}" draggable="true" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${done?'✓':''}</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${esc(t.title)}</div></div>`;
       });
     }
     h+=`</div></div>`;
@@ -897,13 +897,13 @@ function viewReviewDetail(gid){
     if(doneTasks.length>0){
       h+=`<div class="sec-title" style="margin-top:8px">已完成 (${doneTasks.length})</div>`;
       doneTasks.forEach(t=>{
-        h+=`<div class="item done" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk">✓</div><div class="it-title">${esc(t.title)}</div></div>`;
+        h+=`<div class="item done" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}">✓</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${w}">${esc(t.title)}</div></div>`;
       });
     }
     if(undoneTasks.length>0){
       h+=`<div class="sec-title" style="margin-top:8px">未完成 (${undoneTasks.length})</div>`;
       undoneTasks.forEach(t=>{
-        h+=`<div class="item" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk"></div><div class="it-title">${esc(t.title)}</div><button class="btn-nextwk" data-act="task-move-next" data-gid="${g.id}" data-tid="${t.id}" data-w="${w}">复制到下一週 →</button></div>`;
+        h+=`<div class="item" data-g="${g.id}" data-t="${t.id}" data-w="${w}"><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${w}"></div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${w}">${esc(t.title)}</div><button class="btn-nextwk" data-act="task-move-next" data-gid="${g.id}" data-tid="${t.id}" data-w="${w}">复制到下一週 →</button></div>`;
       });
     }
   }
@@ -1038,14 +1038,13 @@ function bindLongPress(){
   if(_lpBound)return; _lpBound=true;
   const clear=()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} _lpTarget=null; };
   document.addEventListener('pointerdown',e=>{
-    const el=e.target.closest('.item[data-g][data-t], .habit-item[data-gid][data-hid], .ph-item[data-gid][data-hid]');
+    const el=e.target.closest('.habit-item[data-gid][data-hid], .ph-item[data-gid][data-hid]');
     if(!el)return;
     _lpTarget=el; _lpFired=false; _lpX=e.clientX; _lpY=e.clientY;
     _lpTimer=setTimeout(()=>{
       _lpFired=true;
       const g=el.dataset.g||el.dataset.gid;
-      if(el.classList.contains('item')) openQuickEditTask(g, el.dataset.t);
-      else openQuickEditHabit(g, el.dataset.hid);
+      openQuickEditHabit(g, el.dataset.hid);
     },500);
   },{passive:true});
   document.addEventListener('pointermove',e=>{
@@ -1109,10 +1108,14 @@ document.addEventListener('click',async(e)=>{
       toast('✅ 已绑定真实日期，本周=第 '+state.currentWeek+' 周');
     }
 
-    // 任务勾选
+    // 任务勾选（点左方框）
     else if(act==='task-toggle'){
       const g=findGoal(t.dataset.g),tk=g.tasks.find(x=>x.id===t.dataset.t);
       tk.log[t.dataset.w]=!tk.log[t.dataset.w];save();render();
+    }
+    // 任务编辑（点标题）
+    else if(act==='task-edit'){
+      openQuickEditTask(t.dataset.g, t.dataset.t);
     }
 
     // 习惯每日打卡
