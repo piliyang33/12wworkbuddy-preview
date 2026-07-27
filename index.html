@@ -857,6 +857,12 @@ function viewReviewDetail(gid){
   const lags=g.lagging||[];
 
   let h=`<div class="page-header"><div class="ph-row"><div><h1>📊 ${esc(g.title)}</h1><p>第 ${w} 周复盘详情</p></div><button class="help-btn" data-act="review-back">← 返回</button></div></div>`;
+  // 周切换：上一周 / 下一周（不退回主页面）
+  h+=`<div class="pad" style="padding-bottom:0"><div class="row between" style="margin:0 0 8px">
+    <button class="btn sm${w<=1?' ghost':''}" data-act="review-prev-week" data-gid="${g.id}" data-w="${w}">◀ 第${w>1?w-1:1}周</button>
+    <span class="muted" style="font-size:12px;font-weight:700">第 ${w}/12 周</span>
+    <button class="btn sm${w>=12?' ghost':''}" data-act="review-next-week" data-gid="${g.id}" data-w="${w}">第${w<12?w+1:12}周 ▶</button>
+  </div></div>`;
   h+=`<div class="pad">`;
 
   // 区域一：滞后指标（可填实际值）
@@ -1118,6 +1124,17 @@ document.addEventListener('click',async(e)=>{
 
     // 复盘页：项目卡片 → 详情 / 返回
     else if(act==='review-back'){currentReviewGid=null;render();}
+    // 复盘详情页：上一周 / 下一周
+    else if(act==='review-prev-week'){
+      const gid=t.dataset.gid, cur=+t.dataset.w;
+      if(cur<=1){toast('已经是第 1 周');return;}
+      state.viewWeek=cur-1; save(); render();
+    }
+    else if(act==='review-next-week'){
+      const gid=t.dataset.gid, cur=+t.dataset.w;
+      if(cur>=12){toast('已经是第 12 周');return;}
+      state.viewWeek=cur+1; save(); render();
+    }
     // 卡片右上角「查看该周详情」按钮：效果同点柱子，直接进当前所看周的详情
     else if(act==='rev-week-detail'){currentReviewGid=t.dataset.gid;render();}
     // 点柱子 → 直接弹出该项目、该周的详情页（不再需要点卡片）
