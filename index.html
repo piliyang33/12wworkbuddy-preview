@@ -1252,8 +1252,20 @@ document.addEventListener('click',async(e)=>{
       const title=document.getElementById('qat-title').value.trim();
       if(!title){toast('请填写任务名');return;}
       const g=findGoal(quickAddGid);if(!g)return;
+      const pr=document.getElementById('qat-priority').value;
+      const due=document.getElementById('qat-due').value||null;
+      // 读取子任务
+      const list=document.getElementById('sub-list');
+      const subs=[];
+      if(list){
+        list.querySelectorAll('.subedit-row').forEach(row=>{
+          const stitle=(row.querySelector('.sub-title').value||'').trim();
+          if(!stitle) return;
+          subs.push({ id:uid(), title:stitle, done:!!row.querySelector('.sub-done').checked });
+        });
+      }
       g.tasks=g.tasks||[];
-      g.tasks.push({id:uid(),title,week:quickAddWk,log:{},priority:'mid',due:null,mustDo:false});
+      g.tasks.push({id:uid(),title,week:quickAddWk,log:{},priority:pr,due:due,mustDo:false,subtasks:subs});
       save();closeModal();render();toast('已添加到第 '+quickAddWk+' 周');
     }
     // 详情页任务按周折叠
@@ -1274,8 +1286,18 @@ document.addEventListener('click',async(e)=>{
       const due=document.getElementById('tat-due').value||null;
       if(!gid||!title){toast('请填写完整');return;}
       const g=findGoal(gid);if(!g)return;
+      // 读取子任务
+      const list=document.getElementById('sub-list');
+      const subs=[];
+      if(list){
+        list.querySelectorAll('.subedit-row').forEach(row=>{
+          const stitle=(row.querySelector('.sub-title').value||'').trim();
+          if(!stitle) return;
+          subs.push({ id:uid(), title:stitle, done:!!row.querySelector('.sub-done').checked });
+        });
+      }
       g.tasks=g.tasks||[];
-      g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:pr,due:due,mustDo:false});
+      g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:pr,due:due,mustDo:false,subtasks:subs});
       save();closeModal();render();toast('已添加');
     }
     else if(act==='today-habit-save'){
@@ -1511,8 +1533,13 @@ function openReviewAddTask(){
     <h2>+ 添加任务</h2>
     <label class="fld">所属项目</label><select id="rag-goal">${opts}</select>
     <label class="fld">任务名称</label><input id="rag-title" placeholder="如：发布第一篇小红书笔记"/>
+    <label class="fld">优先级</label><select id="rag-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
+    <label class="fld">截止日期（可选）</label><input id="rag-due" type="date"/>
     <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
     <select id="rag-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
+    <label class="fld">📋 子任务（可选）</label>
+    <div id="sub-list"></div>
+    <button class="btn sm" data-act="sub-add" style="margin:4px 0 10px">＋ 添加子任务</button>
     <div class="row" style="margin-top:12px">
       <button class="btn ghost" data-act="modal-close">取消</button>
       <button class="btn primary full" data-act="review-task-save">添加</button>
@@ -1530,6 +1557,9 @@ function openTodayAddTask(preGid){
     <label class="fld">截止日期（可选）</label><input id="tat-due" type="date"/>
     <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
     <select id="tat-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
+    <label class="fld">📋 子任务（可选）</label>
+    <div id="sub-list"></div>
+    <button class="btn sm" data-act="sub-add" style="margin:4px 0 10px">＋ 添加子任务</button>
     <div class="row" style="margin-top:12px">
       <button class="btn ghost" data-act="modal-close">取消</button>
       <button class="btn primary full" data-act="today-task-save">添加</button>
@@ -1575,9 +1605,14 @@ function openQuickAddTask(gid,wk){
   quickAddGid=gid;quickAddWk=wk;
   const goal=findGoal(gid);
   openModal(`<div class="overlay"><div class="sheet">
-    <h2>＋ 第 ${wk} 周添加任务</h2><div class="sub">${esc(goal?goal.title:'')} · 只需填任务名</div>
+    <h2>＋ 第 ${wk} 周添加任务</h2><div class="sub">${esc(goal?goal.title:'')}</div>
     <label class="fld">任务名称</label><input id="qat-title" placeholder="如：完成第 3 章草稿" autofocus/>
-    <div class="row" style="margin-top:14px">
+    <label class="fld">优先级</label><select id="qat-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
+    <label class="fld">截止日期（可选）</label><input id="qat-due" type="date"/>
+    <label class="fld">📋 子任务（可选）</label>
+    <div id="sub-list"></div>
+    <button class="btn sm" data-act="sub-add" style="margin:4px 0 10px">＋ 添加子任务</button>
+    <div class="row" style="margin-top:12px">
       <button class="btn ghost" data-act="modal-close">取消</button>
       <button class="btn primary full" data-act="qat-save">添加</button>
     </div></div></div>`);
@@ -1632,10 +1667,22 @@ document.addEventListener('click',async(e)=>{
     const gid=document.getElementById('rag-goal').value;
     const title=document.getElementById('rag-title').value.trim();
     const wv=document.getElementById('rag-week').value;
+    const pr=document.getElementById('rag-priority').value;
+    const due=document.getElementById('rag-due').value||null;
     if(!gid||!title){toast('请填写完整');return;}
     const g=findGoal(gid);if(!g)return;
+    // 读取子任务
+    const list=document.getElementById('sub-list');
+    const subs=[];
+    if(list){
+      list.querySelectorAll('.subedit-row').forEach(row=>{
+        const stitle=(row.querySelector('.sub-title').value||'').trim();
+        if(!stitle) return;
+        subs.push({ id:uid(), title:stitle, done:!!row.querySelector('.sub-done').checked });
+      });
+    }
     g.tasks=g.tasks||[];
-    g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:'mid',due:null,mustDo:false});
+    g.tasks.push({id:uid(),title,week:wv?+wv:state.currentWeek,log:{},priority:pr,due:due,mustDo:false,subtasks:subs});
     save();closeModal();render();toast('已添加');
   }
 },{capture:true}); // 用 capture 确保能拦截到动态生成的按钮
