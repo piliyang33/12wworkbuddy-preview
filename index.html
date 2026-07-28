@@ -106,6 +106,17 @@
   .lag-actual2{flex:1; min-width:0; padding:10px 12px !important; font-size:14px !important; border:2px solid var(--line); border-radius:10px; background:#fafbfc; transition:border-color .15s;}
   .lag-actual2:focus{border-color:var(--indigo); background:#fff; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12);}
   .lag-pct2{flex:0 0 auto; font-weight:800; font-size:14px; min-width:42px; text-align:right;}
+
+  /* 详情页：滞后指标编辑行（项目详情页用） */
+  .ind-edit-row{padding:10px 0; border-bottom:1px solid #f1f5f9;}
+  .ind-edit-row:last-child{border-bottom:none;}
+  .ind-e-name{width:100%;padding:9px 10px;font-size:14px;border:1.5px solid var(--line);border-radius:8px;background:#fafbfc;margin-bottom:6px;box-sizing:border-box;}
+  .ind-e-name:focus{border-color:var(--indigo);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+  .ind-e-line{display:flex;align-items:center;gap:5px;}
+  .lbl-sm{font-size:11px;color:var(--muted);white-space:nowrap;flex:0 0 auto;}
+  .ind-e-target{flex:0 0 80px;padding:7px 8px;font-size:13px;border:1.5px solid var(--line);border-radius:6px;text-align:center;}
+  .ind-e-target:focus{border-color:var(--indigo);outline:none;}
+  .ind-e-dir{flex:1;padding:6px 4px;font-size:12px;border:1.5px solid var(--line);border-radius:6px;color:var(--ink);}
   .wk-toggle{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; color:var(--indigo); padding:8px 2px; cursor:pointer; user-select:none;-webkit-user-select:none;}
   .wk-body{display:none; padding:2px 0 4px;}
   .wk-body.show{display:block;}
@@ -752,23 +763,23 @@ function viewProjectDetail(gid){
   h+=`<div class="page-header"><div class="ph-row"><div><h1>🎯 ${esc(g.title)}</h1><p>第 ${w} 周 · 项目详情</p></div><button class="help-btn" data-act="proj-back">← 返回</button></div></div>`;
   h+=`<div class="pad">`;
 
-  // 区域一：滞后指标（可直接在此填写实际值）
-  h+=`<div class="card"><h3>📈 滞后指标</h3><p class="muted" style="font-size:11px;margin:-3px 0 6px">填入实际值后自动计算达成率</p>`;
-  if(lags.length===0) h+=`<p class="empty">还没有滞后指标。点下方「管理」添加。</p>`;
+  // 区域一：滞后指标（编辑定义：名称/目标/方向；实际值在复盘时填）
+  h+=`<div class="card"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">📈 滞后指标</h3><button class="btn sm" data-act="detail-ind-add" data-gid="${g.id}" style="flex:0 0 auto">＋ 添加</button></div>`;
+  h+=`<p class="muted" style="font-size:11px;margin:-3px 0 8px">编辑指标定义（名称、目标值、方向）。实际值在「复盘」页填写。</p>`;
+  if(lags.length===0) h+=`<p class="empty">还没有滞后指标。点上方「+ 添加」。</p>`;
   else lags.forEach(it=>{
-    const rec=(state.indicatorLog[g.id]&&state.indicatorLog[g.id][w])||{};
-    const actual=rec[it.id];
-    const pct=lagPct(it,actual);
     const dirL=it.dir==='down'?'↓越低越好':'↑越高越好';
-    const fill=pct!=null?pct:0;
-    const col=scoreFill(pct);
-    h+=`<div class="lag-row">
-      <div class="lag-name">${esc(it.name||'未命名')}<span class="lag-pct2" style="color:${scoreColor(pct)};flex:0 0 auto;margin-left:auto">${pct!=null?pct+'%':'—'}</span></div>
-      <div class="lag-sub">目标 ${it.target!=null?esc(it.target):'?'} · ${dirL}</div>
-      <div class="lag-input-row">
-        <input class="lag-actual2" data-lagactual="1" data-goal="${g.id}" data-lag="${it.id}" data-w="${w}" type="number" placeholder="输入实际值…" value="${actual!=null?esc(actual):''}"/>
+    h+=`<div class="ind-edit-row" data-iid="${it.id}">
+      <input class="ind-e-name" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="name" placeholder="指标名称" value="${esc(it.name||'')}"/>
+      <div class="ind-e-line">
+        <span class="lbl-sm">目标</span>
+        <input class="ind-e-target" type="number" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="target" placeholder="目标值" value="${it.target!=null?esc(it.target):''}"/>
+        <select class="ind-e-dir" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="dir">
+          <option value="up"${it.dir!=='down'?' selected':''}>↑越高越好</option>
+          <option value="down"${it.dir==='down'?' selected':''}>↓越低越好</option>
+        </select>
+        <button class="del sm" data-act="detail-ind-del" data-gid="${g.id}" data-iid="${it.id}">✕</button>
       </div>
-      <div class="pp-bar"><i style="width:${fill}%;background:${col}"></i></div>
     </div>`;
   });
   h+=`</div>`;
@@ -1246,6 +1257,27 @@ document.addEventListener('click',async(e)=>{
     // 详情页内添加
     else if(act==='detail-add-task'){openTodayAddTask(t.dataset.gid);}
     else if(act==='detail-add-habit'){openTodayAddHabit(t.dataset.gid);}
+    // 详情页内编辑滞后指标定义
+    else if(act==='detail-ind-add'){
+      const g=findGoal(t.dataset.gid);if(!g)return;
+      g.lagging=g.lagging||[];
+      g.lagging.push({id:uid(),name:'',target:null,dir:'up'});
+      save();render();
+    }
+    else if(act==='detail-ind-del'){
+      const g=findGoal(t.dataset.gid);if(!g)return;
+      const iid=t.dataset.iid;
+      if(g.lagging)g.lagging=g.lagging.filter(x=>x.id!==iid);
+      save();render();
+    }
+    else if(act==='detail-ind-write'){
+      const g=findGoal(t.dataset.gid);if(!g)return;
+      const iid=t.dataset.iid;const fld=t.dataset.fld;
+      const it=(g.lagging||[]).find(x=>x.id===iid);if(!it)return;
+      let v=t.value;
+      if(fld==='target')v=v===''?null:+v;
+      it[fld]=v;save();
+    }
     // 每周快速添加（指定项目+周，只填名称）
     else if(act==='wk-add-task'){openQuickAddTask(t.dataset.gid,+t.dataset.wk);}
     else if(act==='qat-save'){
