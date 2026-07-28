@@ -810,7 +810,7 @@ function viewProjectDetail(gid){
         <span>前 ${cur-1} 周${pastTasks.length>0?' ('+pastTasks.length+')':''}</span>
         <span class="wk-arrow">▸</span>
       </div>
-      <div class="wk-body" id="wk-${g.id}-past">`;
+      <div class="wk-body" id="wk-${g.id}-past" style="display:none;">`;
     for(let wi=1;wi<cur;wi++){
       const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
       h+=`<div class="wk-past-sub" data-wk-group="${g.id}-${wi}">
@@ -818,7 +818,7 @@ function viewProjectDetail(gid){
           <span>第 ${wi} 周${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
           <span class="wk-arrow">▸</span>
         </div>
-        <div class="wk-body" id="wk-${g.id}-${wi}">`;
+        <div class="wk-body" id="wk-${g.id}-${wi}" style="display:none;">`;
       if(wkTasks.length>0){
         anyTask=true;
         wkTasks.forEach(t=>{
@@ -842,7 +842,7 @@ function viewProjectDetail(gid){
           <span class="wk-arrow">▾</span>
         </span>
       </div>
-      <div class="wk-body show" id="wk-${g.id}-${wi}">`;
+      <div class="wk-body" id="wk-${g.id}-${wi}" style="display:block;">`;
     if(wkTasks.length>0){
       anyTask=true;
       wkTasks.forEach(t=>{
@@ -1337,7 +1337,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='wk-toggle'){
       const body=document.getElementById('wk-'+t.dataset.gid+'-'+t.dataset.wk);
       const arrow=t.querySelector('.wk-arrow');
-      if(body){body.classList.toggle('show');if(arrow)arrow.textContent=body.classList.contains('show')?'▾':'▸';}
+      if(body){const isHidden=body.style.display==='none';body.style.display=isHidden?'':'none';if(arrow)arrow.textContent=isHidden?'▾':'▸';}
     }
 
     // 今天页直接添加
