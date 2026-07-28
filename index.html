@@ -114,10 +114,7 @@
   .ind-e-name:focus,.ind-e-target:focus{border-color:var(--indigo); background:#fff; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12);}
   .ind-e-target{flex:0 0 72px; padding:8px 6px; font-size:13px; border:1.5px solid var(--line); border-radius:7px; text-align:center; box-sizing:border-box;}
   .wk-toggle{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; color:var(--indigo); padding:8px 2px; cursor:pointer; user-select:none;-webkit-user-select:none;}
-  .wk-past-sub{margin:4px 0 2px; padding-left:8px; border-left:2px dashed var(--line);}
-  .wk-past-h{font-size:11.5px; font-weight:700; color:var(--muted); padding:4px 2px; user-select:none;-webkit-user-select:none;}
-  .wk-past-h:first-child{margin-top:2px;}
-
+  .wk-past-sub{margin:2px 0;}
   /* 任务拖拽 */
   .item.dragging{opacity:.35; transform:scale(.98);}
   .drop-over{border:2px dashed var(--indigo); border-radius:10px; background:#eef2ff; transition:.15s;}
@@ -805,7 +802,7 @@ function viewProjectDetail(gid){
   h+=`<div class="card"><h3 style="margin:0;margin-bottom:6px">✅ 任务（按周）<span class="muted" style="font-size:11px;font-weight:500;margin-left:6px">拖动任务到其他周可移动</span></h3>`;
   let anyTask=false;
   const cur=state.currentWeek;
-  // 当前周之前的周：聚合为一个「前 N-1 周」折叠入口
+  // 当前周之前的周：聚合为一个「前 N-1 周」折叠入口，默认收起；内部每周也是独立折叠行
   if(cur>1){
     const pastTasks=(g.tasks||[]).filter(t=>t.week>=1&&t.week<cur);
     h+=`<div class="wk-group" data-wk-group="${g.id}-past">
@@ -817,7 +814,11 @@ function viewProjectDetail(gid){
     for(let wi=1;wi<cur;wi++){
       const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
       h+=`<div class="wk-past-sub" data-wk-group="${g.id}-${wi}">
-        <div class="wk-past-h">第 ${wi} 周${wkTasks.length>0?' ('+wkTasks.length+')':''}</div>`;
+        <div class="wk-toggle" data-act="wk-toggle" data-gid="${g.id}" data-wk="${wi}">
+          <span>第 ${wi} 周${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
+          <span class="wk-arrow">▸</span>
+        </div>
+        <div class="wk-body" id="wk-${g.id}-${wi}">`;
       if(wkTasks.length>0){
         anyTask=true;
         wkTasks.forEach(t=>{
@@ -825,7 +826,7 @@ function viewProjectDetail(gid){
           h+=`<div class="item${done?' done':''}" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="grip" draggable="true" title="拖动到其他周"></div><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${done?'✓':''}</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${subCaretHTML(g,t,wi,done)}${esc(t.title)}</div></div>${subRowsHTML(g,t,wi)}`;
         });
       }
-      h+=`</div>`;
+      h+=`</div></div>`;
     }
     h+=`</div></div>`;
   }
