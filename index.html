@@ -449,7 +449,7 @@ function parseJSON(text){
 }
 const SYS_PLAN=`你是《The 12 Week Year》（12周年度）方法论教练。用户会给你一个「任务目标」和「背景」，请一次性拆解为可执行的计划，只输出 JSON，不要任何解释或 Markdown 代码块。格式：
 {"lagging":[{"name":"测量维度","target":50,"dir":"up"}],"habits":[{"title":"习惯名","suggestedWeek":3,"perWeek":1}],"tasks":[{"title":"任务名","suggestedWeek":2}]}
-- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 默认 "up"（越高越好，目前界面不显示方向）。
+- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 默认 "up"（界面不显示方向）。
 - habits：建议养成的习惯，3-6 条。suggestedWeek 为 1-12 的整数（从哪周开始）；perWeek 为该习惯每周建议次数（1-7）。
 - tasks：建议执行的具体任务，3-6 条。suggestedWeek 为 1-12 的整数（放在第几周）。
 请结合用户的背景，给出具体、可衡量、可行动的建议。`;
