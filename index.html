@@ -448,10 +448,12 @@ function parseJSON(text){
   return null;
 }
 const SYS_PLAN=`你是《The 12 Week Year》（12周年度）方法论教练。用户会给你一个「任务目标」和「背景」，请一次性拆解为可执行的计划，只输出 JSON，不要任何解释或 Markdown 代码块。格式：
-{"lagging":[{"name":"测量维度","target":50,"dir":"up"}],"habits":[{"title":"习惯名","suggestedWeek":3,"perWeek":1}],"tasks":[{"title":"任务名","suggestedWeek":2}]}
-- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 默认 "up"（界面不显示方向）。
-- habits：建议养成的习惯，3-6 条。suggestedWeek 为 1-12 的整数（从哪周开始）；perWeek 为该习惯每周建议次数（1-7）。
-- tasks：建议执行的具体任务，3-6 条。suggestedWeek 为 1-12 的整数（放在第几周）。
+{"lagging":[{"name":"测量维度","target":50}],"habits":[{"title":"习惯名","suggestedWeek":3,"perWeek":1}],"tasks":[{"title":"任务名","suggestedWeek":2}]}
+重要规则：
+- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值。
+- habits：建议养成的习惯，3-6 条。suggestedWeek 为当前周~12 的整数（从哪周开始，不得早于当前周）；perWeek 为该习惯每周建议次数（1-7）。所有习惯默认从今天开始。
+- tasks：建议执行的具体任务，3-6 条。suggestedWeek 为当前周~12 的整数（放在第几周，不得早于当前周）；每个任务的截止日期默认该周周日。
+- 用户当前是第 ${()=>state.currentWeek} 周。所有 suggestedWeek 不得小于 ${()=>state.currentWeek}。
 请结合用户的背景，给出具体、可衡量、可行动的建议。`;
 
 /* ============================ 视图框架 ============================ */
@@ -475,6 +477,16 @@ function ring(pct,color,sub){
 function findGoal(id){ return state.goals.find(g=>g.id===id); }
 /* 今日感悟日期键 / 紧急判断 / 排序 / 连续打卡 / 必做 */
 function todayKey(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+// 第 w 周的周日（本周最后一天）日期字符串；无锚点时基于今天推算
+function weekEndDate(w){
+  const p=n=>String(n).padStart(2,'0');
+  const dates=weekDates(w);
+  if(dates&&dates.length===7){ const sun=dates[6]; return sun.getFullYear()+'-'+p(sun.getMonth()+1)+'-'+p(sun.getDate()); }
+  // fallback：无锚点时，假设今天在第 w 周，周日 = 今天 + (6 - todayWeekday())
+  const td=new Date(); const offset=(w-(state.currentWeek||1))*7 + (6 - (state.currentDay||todayWeekday()));
+  td.setDate(td.getDate()+offset);
+  return td.getFullYear()+'-'+p(td.getMonth()+1)+'-'+p(td.getDate());
+}
 function isUrgent(t){ if(!t||!t.due)return false; return t.due<=todayKey(); }
 function sortTasksForToday(a,b){
   const ua=isUrgent(a.t), ub=isUrgent(b.t);
@@ -1123,7 +1135,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='plan-lag-del'){const g=currentModalGoal;g.lagging=(g.lagging||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
     else if(act==='plan-hab-add'){const g=currentModalGoal;g.habits=g.habits||[];const w=state.currentWeek;g.habits.push({id:uid(),title:'',weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:1,startDate:todayKey(),log:{}});save();openPlan(g);}
     else if(act==='plan-hab-del'){const g=currentModalGoal;g.habits=(g.habits||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
-    else if(act==='plan-task-add'){const g=currentModalGoal;g.tasks=g.tasks||[];g.tasks.push({id:uid(),title:'',week:state.currentWeek,log:{},priority:'mid',due:null,mustDo:false});save();openPlan(g);}
+    else if(act==='plan-task-add'){const g=currentModalGoal;g.tasks=g.tasks||[];g.tasks.push({id:uid(),title:'',week:state.currentWeek,log:{},priority:'mid',due:weekEndDate(state.currentWeek),mustDo:false});save();openPlan(g);}
     else if(act==='plan-task-del'){const g=currentModalGoal;g.tasks=(g.tasks||[]).filter(x=>x.id!==t.dataset.iid);save();openPlan(g);}
     else if(act==='plan-ai'){await runPlanAI(currentModalGoal);}
     else if(act==='plan-save'){save();closeModal();render();toast('已保存');}
@@ -1324,11 +1336,12 @@ document.addEventListener('click',async(e)=>{
       const title=document.getElementById('tah-title').value.trim();
       const wv=+document.getElementById('tah-week').value||state.currentWeek;
       const pw=+document.getElementById('tah-pw').value||1;
+      const sd=document.getElementById('tah-start').value||todayKey();
       if(!gid||!title){toast('请填写完整');return;}
       const g=findGoal(gid);if(!g)return;
       g.habits=g.habits||[];
       const w=Math.max(1,Math.min(12,wv));
-      g.habits.push({id:uid(),title,weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,pw)),startDate:todayKey(),log:{}});
+      g.habits.push({id:uid(),title,weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,pw)),startDate:sd,log:{}});
       save();closeModal();render();toast('已添加');
     }
     else if(act==='personal-habit-add'){ openPersonalHabitAdd(); }
@@ -1459,9 +1472,9 @@ function openHelp(){
 /* AI merge helpers */
 function toLag(v){return Array.isArray(v)?v.filter(x=>x&&(x.name||x.text)).map(x=>({id:uid(),name:String(x.name||x.text||''),target:(x.target==null||x.target==='')?null:Number(x.target),dir:(x.dir==='down'?'down':'up')})):[];}
 function mergeLag(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.name||'').trim().toLowerCase()));toLag(ai).forEach(it=>{const k=String(it.name||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
-function toHabit(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(1,Math.min(12,+(x.suggestedWeek||1)||1));return{id:uid(),title:String(x.title||x.text||''),weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,+(x.perWeek||1)||1)),startDate:null,log:{}};}):[];}
+function toHabit(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(state.currentWeek,Math.min(12,+(x.suggestedWeek||state.currentWeek)||state.currentWeek));return{id:uid(),title:String(x.title||x.text||''),weeks:Array.from({length:13-w},(_,i)=>w+i),perWeek:Math.max(1,Math.min(7,+(x.perWeek||1)||1)),startDate:todayKey(),log:{}};}):[];}
 function mergeHabits(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.title||'').trim().toLowerCase()));toHabit(ai).forEach(it=>{const k=String(it.title||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
-function toTask(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(1,Math.min(12,+(x.suggestedWeek||1)||1));return{id:uid(),title:String(x.title||x.text||''),week:w,log:{}};}):[];}
+function toTask(v){return Array.isArray(v)?v.filter(x=>x&&(x.title||x.text)).map(x=>{const w=Math.max(state.currentWeek,Math.min(12,+(x.suggestedWeek||state.currentWeek)||state.currentWeek));return{id:uid(),title:String(x.title||x.text||''),week:w,log:{},priority:'mid',due:weekEndDate(w),mustDo:false,subtasks:[]};}):[];}
 function mergeTasks(existing,ai){const arr=(existing||[]).slice();const have=new Set(arr.map(x=>String(x.title||'').trim().toLowerCase()));toTask(ai).forEach(it=>{const k=String(it.title||'').trim().toLowerCase();if(k&&!have.has(k)){arr.push(it);have.add(k);}});return arr;}
 
 async function runPlanAI(g){
@@ -1552,7 +1565,7 @@ function openReviewAddTask(){
     <label class="fld">所属项目</label><select id="rag-goal">${opts}</select>
     <label class="fld">任务名称</label><input id="rag-title" placeholder="如：发布第一篇小红书笔记"/>
     <label class="fld">优先级</label><select id="rag-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
-    <label class="fld">截止日期（可选）</label><input id="rag-due" type="date"/>
+    <label class="fld">截止日期（可选，默认本周日）</label><input id="rag-due" type="date" value="${weekEndDate(state.currentWeek)}"/>
     <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
     <select id="rag-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
     <label class="fld">📋 子任务（可选）</label>
@@ -1572,7 +1585,7 @@ function openTodayAddTask(preGid){
     <label class="fld">所属项目</label><select id="tat-goal">${goalOpts()}</select>
     <label class="fld">任务名称</label><input id="tat-title" placeholder="如：完成第 3 章草稿"/>
     <label class="fld">优先级</label><select id="tat-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
-    <label class="fld">截止日期（可选）</label><input id="tat-due" type="date"/>
+    <label class="fld">截止日期（可选，默认本周日）</label><input id="tat-due" type="date" value="${weekEndDate(state.currentWeek)}"/>
     <label class="fld">安排周次（留空 = 当前第 ${state.currentWeek} 周）</label>
     <select id="tat-week"><option value="">当前周（第 ${state.currentWeek} 周）</option>${weekOpts(state.currentWeek)}</select>
     <label class="fld">📋 子任务（可选）</label>
@@ -1594,6 +1607,8 @@ function openTodayAddHabit(preGid){
     <select id="tah-week">${weekOpts(state.currentWeek)}</select>
     <label class="fld">每周几次</label>
     <select id="tah-pw">${[1,2,3,4,5,6,7].map(n=>`<option${n===1?' selected':''}>${n}</option>`).join('')}</select>
+    <label class="fld">开始日期（默认今天）</label>
+    <input id="tah-start" type="date" value="${todayKey()}"/>
     <div class="row" style="margin-top:12px">
       <button class="btn ghost" data-act="modal-close">取消</button>
       <button class="btn primary full" data-act="today-habit-save">添加</button>
@@ -1626,7 +1641,7 @@ function openQuickAddTask(gid,wk){
     <h2>＋ 第 ${wk} 周添加任务</h2><div class="sub">${esc(goal?goal.title:'')}</div>
     <label class="fld">任务名称</label><input id="qat-title" placeholder="如：完成第 3 章草稿" autofocus/>
     <label class="fld">优先级</label><select id="qat-priority">${['low','mid','high'].map(p=>`<option value="${p}"${p==='mid'?' selected':''}>${p==='high'?'高':p==='mid'?'中':'低'}</option>`).join('')}</select>
-    <label class="fld">截止日期（可选）</label><input id="qat-due" type="date"/>
+    <label class="fld">截止日期（可选，默认本周日）</label><input id="qat-due" type="date" value="${weekEndDate(quickAddWk||state.currentWeek)}"/>
     <label class="fld">📋 子任务（可选）</label>
     <div id="sub-list"></div>
     <button class="btn sm" data-act="sub-add" style="margin:4px 0 10px">＋ 添加子任务</button>
