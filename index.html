@@ -114,9 +114,9 @@
   .ind-e-name:focus,.ind-e-target:focus{border-color:var(--indigo); background:#fff; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12);}
   .ind-e-target{flex:0 0 72px; padding:8px 6px; font-size:13px; border:1.5px solid var(--line); border-radius:7px; text-align:center; box-sizing:border-box;}
   .wk-toggle{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; color:var(--indigo); padding:8px 2px; cursor:pointer; user-select:none;-webkit-user-select:none;}
-  .wk-body{display:none; padding:2px 0 4px;}
-  .wk-body.show{display:block;}
-  .wk-add{font-size:11px; color:var(--indigo); background:var(--soft); border:none; border-radius:8px; padding:3px 9px; font-weight:700; cursor:pointer; flex:0 0 auto; margin-left:6px;}
+  .wk-past-sub{margin:4px 0 2px; padding-left:8px; border-left:2px dashed var(--line);}
+  .wk-past-h{font-size:11.5px; font-weight:700; color:var(--muted); padding:4px 2px; user-select:none;-webkit-user-select:none;}
+  .wk-past-h:first-child{margin-top:2px;}
 
   /* 任务拖拽 */
   .item.dragging{opacity:.35; transform:scale(.98);}
@@ -804,22 +804,44 @@ function viewProjectDetail(gid){
 
   h+=`<div class="card"><h3 style="margin:0;margin-bottom:6px">✅ 任务（按周）<span class="muted" style="font-size:11px;font-weight:500;margin-left:6px">拖动任务到其他周可移动</span></h3>`;
   let anyTask=false;
-  for(let wi=1;wi<=12;wi++){
+  const cur=state.currentWeek;
+  // 当前周之前的周：聚合为一个「前 N-1 周」折叠入口
+  if(cur>1){
+    const pastTasks=(g.tasks||[]).filter(t=>t.week>=1&&t.week<cur);
+    h+=`<div class="wk-group" data-wk-group="${g.id}-past">
+      <div class="wk-toggle" data-act="wk-toggle" data-gid="${g.id}" data-wk="past">
+        <span>前 ${cur-1} 周${pastTasks.length>0?' ('+pastTasks.length+')':''}</span>
+        <span class="wk-arrow">▸</span>
+      </div>
+      <div class="wk-body" id="wk-${g.id}-past">`;
+    for(let wi=1;wi<cur;wi++){
+      const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
+      h+=`<div class="wk-past-sub" data-wk-group="${g.id}-${wi}">
+        <div class="wk-past-h">第 ${wi} 周${wkTasks.length>0?' ('+wkTasks.length+')':''}</div>`;
+      if(wkTasks.length>0){
+        anyTask=true;
+        wkTasks.forEach(t=>{
+          const done=!!(t.log&&t.log[wi]);
+          h+=`<div class="item${done?' done':''}" data-drag-task="${t.id}" data-drag-gid="${g.id}" data-g="${g.id}" data-t="${t.id}" data-w="${wi}"><div class="grip" draggable="true" title="拖动到其他周"></div><div class="chk" data-act="task-toggle" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${done?'✓':''}</div><div class="it-title" data-act="task-edit" data-g="${g.id}" data-t="${t.id}" data-w="${wi}">${subCaretHTML(g,t,wi,done)}${esc(t.title)}</div></div>${subRowsHTML(g,t,wi)}`;
+        });
+      }
+      h+=`</div>`;
+    }
+    h+=`</div></div>`;
+  }
+  // 当前周及以后：逐周独立、默认展开
+  for(let wi=cur;wi<=12;wi++){
     const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
-    // 即使该周没任务也显示周标题（方便拖入 + 添加）
-    // 当前周之前的周默认折叠；当前周及之后默认展开
-    const isPast=wi<state.currentWeek;
-    const isCur=(wi===w);
-    const isExpanded=!isPast; // 当前周及以后都展开
+    const isCur=(wi===cur);
     h+=`<div class="wk-group" data-wk-group="${g.id}-${wi}">
       <div class="wk-toggle" data-act="wk-toggle" data-gid="${g.id}" data-wk="${wi}">
-        <span>第 ${wi} 周${isCur?' · 本周':''}${isPast?' · 已过':''}${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
+        <span>第 ${wi} 周${isCur?' · 本周':''}${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
         <span style="display:flex;align-items:center;gap:4px">
           <button class="wk-add" data-act="wk-add-task" data-gid="${g.id}" data-wk="${wi}">＋</button>
-          <span class="wk-arrow">${isExpanded?'▾':'▸'}</span>
+          <span class="wk-arrow">▾</span>
         </span>
       </div>
-      <div class="wk-body${isExpanded?' show':''}" id="wk-${g.id}-${wi}">`;
+      <div class="wk-body show" id="wk-${g.id}-${wi}">`;
     if(wkTasks.length>0){
       anyTask=true;
       wkTasks.forEach(t=>{
