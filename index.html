@@ -1078,8 +1078,8 @@ function viewSettings(){
     <button class="btn primary full" data-act="set-save" style="margin-top:10px">保存设置</button>
     <button class="btn full" data-act="set-test" style="margin-top:6px">测试连接</button>
   </div>`;
-  h+=`<div class="card"><h3>💾 数据</h3><p class="muted">本地存储于本浏览器。导出可备份 / 在另一台设备导入。</p>
-    <div class="row" style="margin-top:6px"><button class="btn full" data-act="export">导出 JSON</button><button class="btn full" data-act="import">导入 JSON</button></div>
+  h+=`<div class="card"><h3>💾 数据</h3><p class="muted">数据只存在「当前这个打开方式」里。iPhone 上：主屏图标、Safari 浏览器、Chrome 各自是独立存储。换设备 / 换打开方式前，请先导出备份再导入。</p>
+    <div class="row" style="margin-top:6px"><button class="btn full" data-act="export">导出 / 备份</button><button class="btn full" data-act="import">导入 / 恢复</button></div>
     <button class="btn danger full" data-act="reset" style="margin-top:6px">清空全部数据</button>
   </div>`;
   h+=`<div class="card"><h3>💡 关于</h3><p class="muted">基于《The 12 Week Year》方法论：把 1 年目标压进 12 周，用滞后指标看结果、引领指标管行动，每周复盘执行度。</p></div>`;
@@ -1419,6 +1419,10 @@ document.addEventListener('click',async(e)=>{
     }
     else if(act==='export'){exportJSON();}
     else if(act==='import'){importJSON();}
+    else if(act==='exp-copy'){const ta=document.getElementById('exp-ta');copyText(ta?ta.value:'');}
+    else if(act==='exp-download'){const blob=new Blob([document.getElementById('exp-ta').value],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='12week-backup.json';a.click();toast('已下载');}
+    else if(act==='imp-pick'){document.getElementById('imp-file').click();}
+    else if(act==='imp-do'){const ta=document.getElementById('imp-ta');doRestore(ta?ta.value.trim():'');}
     else if(act==='reset'){if(confirm('确定清空？不可恢复')){state=defaultState();save();render();toast('已清空');}}
 
     // 长按编辑：任务保存 / 删除
@@ -1761,14 +1765,43 @@ document.addEventListener('click',async(e)=>{
 function openModal(html){document.getElementById('modal').innerHTML=html;}
 function closeModal(){document.getElementById('modal').innerHTML='';}
 function exportJSON(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='12week-backup.json';a.click();toast('已导出');
+  const json=JSON.stringify(state,null,2);
+  openModal(`<div class="overlay"><div class="sheet">
+    <div class="sh-head"><h3>导出 / 备份</h3><button class="x" data-act="modal-close">✕</button></div>
+    <p class="muted">下面是你当前这个打开方式里的全部数据。复制或下载保存，可在别处导入恢复。</p>
+    <textarea id="exp-ta" readonly style="width:100%;height:190px;font:12px/1.5 ui-monospace,monospace;padding:8px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;">${json.replace(/</g,'&lt;')}</textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn full" data-act="exp-copy">📋 复制</button>
+      <button class="btn full" data-act="exp-download">⬇️ 下载文件</button>
+    </div>
+    <button class="btn full" data-act="modal-close" style="margin-top:6px">关闭</button>
+  </div></div>`);
 }
 function importJSON(){
-  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
-  inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
-    r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.goals)throw 0;state=d;save();render();toast('导入成功');}catch(e){toast('文件无效');}};
-    r.readAsText(f);};inp.click();
+  openModal(`<div class="overlay"><div class="sheet">
+    <div class="sh-head"><h3>导入 / 恢复</h3><button class="x" data-act="modal-close">✕</button></div>
+    <p class="muted">粘贴之前导出的 JSON，或选择备份文件。导入会覆盖当前这个打开方式里的数据。</p>
+    <textarea id="imp-ta" placeholder="在此粘贴备份 JSON…" style="width:100%;height:170px;font:12px/1.5 ui-monospace,monospace;padding:8px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn full" data-act="imp-pick">📁 从文件选择</button>
+      <button class="btn primary full" data-act="imp-do">✅ 恢复</button>
+    </div>
+    <input id="imp-file" type="file" accept=".json,application/json" style="display:none"/>
+  </div></div>`);
+  setTimeout(()=>{const inp=document.getElementById('imp-file');if(inp)inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const ta=document.getElementById('imp-ta');if(ta)ta.value=r.result;};r.readAsText(f);};},30);
+}
+function doRestore(text){
+  try{
+    const d=JSON.parse(text);
+    if(!d||!d.goals) throw new Error('no goals');
+    state=migrate(d); save(); closeModal(); render(); toast('导入成功');
+  }catch(e){ toast('内容无效，无法导入'); }
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast('已复制'); }
+  catch(e){
+    const ta=document.getElementById('exp-ta'); if(ta){ta.removeAttribute('readonly');ta.select();document.execCommand('copy');ta.setAttribute('readonly','');toast('已复制');}
+  }
 }
 
 /* ============================ 任务拖拽（跨周移动） ============================ */
