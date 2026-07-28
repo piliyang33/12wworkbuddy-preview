@@ -108,15 +108,11 @@
   .lag-pct2{flex:0 0 auto; font-weight:800; font-size:14px; min-width:42px; text-align:right;}
 
   /* 详情页：滞后指标编辑行（项目详情页用） */
-  .ind-edit-row{padding:10px 0; border-bottom:1px solid #f1f5f9;}
+  .ind-edit-row{display:flex; align-items:center; gap:6px; padding:6px 0; border-bottom:1px solid #f1f5f9;}
   .ind-edit-row:last-child{border-bottom:none;}
-  .ind-e-name{width:100%;padding:9px 10px;font-size:14px;border:1.5px solid var(--line);border-radius:8px;background:#fafbfc;margin-bottom:6px;box-sizing:border-box;}
-  .ind-e-name:focus{border-color:var(--indigo);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
-  .ind-e-line{display:flex;align-items:center;gap:5px;}
-  .lbl-sm{font-size:11px;color:var(--muted);white-space:nowrap;flex:0 0 auto;}
-  .ind-e-target{flex:0 0 80px;padding:7px 8px;font-size:13px;border:1.5px solid var(--line);border-radius:6px;text-align:center;}
-  .ind-e-target:focus{border-color:var(--indigo);outline:none;}
-  .ind-e-dir{flex:1;padding:6px 4px;font-size:12px;border:1.5px solid var(--line);border-radius:6px;color:var(--ink);}
+  .ind-e-name{flex:1 1 auto; min-width:0; padding:8px 9px; font-size:14px; border:1.5px solid var(--line); border-radius:7px; background:#fafbfc; box-sizing:border-box;}
+  .ind-e-name:focus,.ind-e-target:focus{border-color:var(--indigo); background:#fff; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+  .ind-e-target{flex:0 0 72px; padding:8px 6px; font-size:13px; border:1.5px solid var(--line); border-radius:7px; text-align:center; box-sizing:border-box;}
   .wk-toggle{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; color:var(--indigo); padding:8px 2px; cursor:pointer; user-select:none;-webkit-user-select:none;}
   .wk-body{display:none; padding:2px 0 4px;}
   .wk-body.show{display:block;}
@@ -453,7 +449,7 @@ function parseJSON(text){
 }
 const SYS_PLAN=`你是《The 12 Week Year》（12周年度）方法论教练。用户会给你一个「任务目标」和「背景」，请一次性拆解为可执行的计划，只输出 JSON，不要任何解释或 Markdown 代码块。格式：
 {"lagging":[{"name":"测量维度","target":50,"dir":"up"}],"habits":[{"title":"习惯名","suggestedWeek":3,"perWeek":1}],"tasks":[{"title":"任务名","suggestedWeek":2}]}
-- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 取 "up"（越高越好）或 "down"（越低越好）。
+- lagging：要达到的「带数据的结果」维度，1-3 条。name 必须可量化；target 为 12 周结束时希望达到的目标数值；dir 默认 "up"（越高越好，目前界面不显示方向）。
 - habits：建议养成的习惯，3-6 条。suggestedWeek 为 1-12 的整数（从哪周开始）；perWeek 为该习惯每周建议次数（1-7）。
 - tasks：建议执行的具体任务，3-6 条。suggestedWeek 为 1-12 的整数（放在第几周）。
 请结合用户的背景，给出具体、可衡量、可行动的建议。`;
@@ -765,21 +761,13 @@ function viewProjectDetail(gid){
 
   // 区域一：滞后指标（编辑定义：名称/目标/方向；实际值在复盘时填）
   h+=`<div class="card"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">📈 滞后指标</h3><button class="btn sm" data-act="detail-ind-add" data-gid="${g.id}" style="flex:0 0 auto">＋ 添加</button></div>`;
-  h+=`<p class="muted" style="font-size:11px;margin:-3px 0 8px">编辑指标定义（名称、目标值、方向）。实际值在「复盘」页填写。</p>`;
+  h+=`<p class="muted" style="font-size:11px;margin:-3px 0 8px">编辑指标名称与目标值。实际值在「复盘」页填写。</p>`;
   if(lags.length===0) h+=`<p class="empty">还没有滞后指标。点上方「+ 添加」。</p>`;
   else lags.forEach(it=>{
-    const dirL=it.dir==='down'?'↓越低越好':'↑越高越好';
     h+=`<div class="ind-edit-row" data-iid="${it.id}">
       <input class="ind-e-name" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="name" placeholder="指标名称" value="${esc(it.name||'')}"/>
-      <div class="ind-e-line">
-        <span class="lbl-sm">目标</span>
-        <input class="ind-e-target" type="number" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="target" placeholder="目标值" value="${it.target!=null?esc(it.target):''}"/>
-        <select class="ind-e-dir" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="dir">
-          <option value="up"${it.dir!=='down'?' selected':''}>↑越高越好</option>
-          <option value="down"${it.dir==='down'?' selected':''}>↓越低越好</option>
-        </select>
-        <button class="del sm" data-act="detail-ind-del" data-gid="${g.id}" data-iid="${it.id}">✕</button>
-      </div>
+      <input class="ind-e-target" type="number" data-act="detail-ind-write" data-gid="${g.id}" data-iid="${it.id}" data-fld="target" placeholder="目标" value="${it.target!=null?esc(it.target):''}"/>
+      <button class="del sm" data-act="detail-ind-del" data-gid="${g.id}" data-iid="${it.id}">✕</button>
     </div>`;
   });
   h+=`</div>`;
@@ -931,12 +919,11 @@ function viewReviewDetail(gid){
       const rec=(state.indicatorLog[g.id]&&state.indicatorLog[g.id][w])||{};
       const actual=rec[it.id];
       const pct=lagPct(it,actual);
-      const dirL=it.dir==='down'?'↓越低越好':'↑越高越好';
       const fill=pct!=null?pct:0;
       const col=scoreFill(pct);
       h+=`<div class="lag-row">
         <div class="lag-name">${esc(it.name||'未命名')}<span class="lag-pct2" style="color:${scoreColor(pct)};flex:0 0 auto;margin-left:auto">${pct!=null?pct+'%':'—'}</span></div>
-        <div class="lag-sub">目标 ${it.target!=null?esc(it.target):'?'} · ${dirL}</div>
+        <div class="lag-sub">目标 ${it.target!=null?esc(it.target):'?'}</div>
         <div class="lag-input-row">
           <input class="lag-actual2" data-lagactual="1" data-goal="${g.id}" data-lag="${it.id}" data-w="${w}" type="number" placeholder="实际值" value="${actual!=null?esc(actual):''}"/>
         </div>
@@ -1499,7 +1486,6 @@ function openPlan(g){
     <input class="plan-in" data-lk="name" data-iid="${it.id}" placeholder="测量维度，如：月销售收入（万）" value="${esc(it.name||'')}"/>
     <input class="plan-in plan-target" data-lk="target" data-iid="${it.id}" type="number" placeholder="目标值" value="${it.target!=null?esc(it.target):''}"/>
     <div class="plan-line">
-      <select class="plan-sel" data-lk="dir" data-iid="${it.id}"><option value="up"${it.dir!=='down'?' selected':''}>↑越高越好</option><option value="down"${it.dir==='down'?' selected':''}>↓越低越好</option></select>
       <button class="del sm" data-act="plan-lag-del" data-iid="${it.id}">✕</button>
     </div></div>`).join('')||'<p class="muted" style="padding:4px 0">还没有滞后指标</p>';
 
