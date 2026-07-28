@@ -1125,6 +1125,14 @@ document.addEventListener('click',async(e)=>{
       const g={id:uid(),title,background:bg,lagging:[],habits:[],tasks:[]};
       state.goals.push(g);save();await runPlanAI(g);
     }
+    else if(act==='goal-manual'){
+      const title=document.getElementById('goal-title').value.trim();
+      const bg=document.getElementById('goal-bg').value.trim();
+      if(!title){toast('请先填写任务目标');return;}
+      if(state.goals.length>=5){toast('最多 5 个项目');closeModal();return;}
+      const g={id:uid(),title,background:bg,lagging:[],habits:[],tasks:[]};
+      state.goals.push(g);save();openPlan(g);
+    }
     else if(act==='goal-del'){
       const id=t.dataset.goal,g=findGoal(id);
       if(confirm(`删除「${g.title}」及其所有内容？`)){state.goals=state.goals.filter(x=>x.id!==id);save();render();}
@@ -1443,13 +1451,13 @@ let currentModalGoal=null,planLoading=false;
 
 function openGoalModal(){
   openModal(`<div class="overlay"><div class="sheet">
-    <h2>🎯 新建项目</h2><div class="sub">你脑子里只有一个想达成的任务，写下来让 AI 帮你拆。</div>
+    <h2>🎯 新建项目</h2><div class="sub">写下你的目标，然后选择用 AI 分解或自己填写。</div>
     <label class="fld">① 我要达成一个什么样的任务目标</label>
     <input id="goal-title" placeholder="如：3 个月内把体重减到 70kg"/>
     <label class="fld">② 我的背景是什么（现状 / 约束 / 资源 / 为什么重要）</label>
     <textarea id="goal-bg" placeholder="如：目前 82kg，久坐办公，每周能运动 3 次"></textarea>
     <button class="btn primary full" data-act="goal-start" style="margin-top:12px">🤖 AI 分解任务</button>
-    <button class="btn ghost full" data-act="modal-close" style="margin-top:6px">稍后再说</button>
+    <button class="btn ghost full" data-act="goal-manual" style="margin-top:6px">✏️ 自己填写</button>
   </div></div>`);
 }
 
