@@ -807,16 +807,19 @@ function viewProjectDetail(gid){
   for(let wi=1;wi<=12;wi++){
     const wkTasks=(g.tasks||[]).filter(t=>t.week===wi);
     // 即使该周没任务也显示周标题（方便拖入 + 添加）
+    // 当前周之前的周默认折叠；当前周及之后默认展开
+    const isPast=wi<state.currentWeek;
     const isCur=(wi===w);
+    const isExpanded=!isPast; // 当前周及以后都展开
     h+=`<div class="wk-group" data-wk-group="${g.id}-${wi}">
       <div class="wk-toggle" data-act="wk-toggle" data-gid="${g.id}" data-wk="${wi}">
-        <span>第 ${wi} 周${isCur?' · 本周':''}${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
+        <span>第 ${wi} 周${isCur?' · 本周':''}${isPast?' · 已过':''}${wkTasks.length>0?' ('+wkTasks.length+')':''}</span>
         <span style="display:flex;align-items:center;gap:4px">
           <button class="wk-add" data-act="wk-add-task" data-gid="${g.id}" data-wk="${wi}">＋</button>
-          <span class="wk-arrow">${isCur?'▾':'▸'}</span>
+          <span class="wk-arrow">${isExpanded?'▾':'▸'}</span>
         </span>
       </div>
-      <div class="wk-body${isCur?' show':''}" id="wk-${g.id}-${wi}">`;
+      <div class="wk-body${isExpanded?' show':''}" id="wk-${g.id}-${wi}">`;
     if(wkTasks.length>0){
       anyTask=true;
       wkTasks.forEach(t=>{
